@@ -1,0 +1,231 @@
+<!DOCTYPE html>
+
+<html lang="id"><head>
+<meta charset="utf-8"/>
+<meta content="width=device-width, initial-scale=1.0" name="viewport"/>
+<title>PiringKu - Edit Makanan</title>
+<script src="https://cdn.tailwindcss.com?plugins=forms,container-queries"></script>
+<link href="https://fonts.googleapis.com/css2?family=Material+Symbols+Outlined:wght,FILL@100..700,0..1&amp;display=swap" rel="stylesheet"/>
+<link href="https://fonts.googleapis.com/css2?family=Inter:wght@400;600;700;800&amp;family=JetBrains+Mono:wght@600&amp;display=swap" rel="stylesheet"/>
+<link href="https://fonts.googleapis.com/css2?family=Material+Symbols+Outlined:wght,FILL@100..700,0..1&amp;display=swap" rel="stylesheet"/>
+<script id="tailwind-config">
+        tailwind.config = {
+            darkMode: "class",
+            theme: {
+                extend: {
+                    colors: {
+                        "surface-variant": "#e1e3df",
+                        "error": "#ba1a1a",
+                        "surface-container-high": "#e7e9e5",
+                        "primary-fixed": "#b1f0ce",
+                        "tertiary-container": "#8d4d4e",
+                        "primary-container": "#2d6a4f",
+                        "on-secondary": "#ffffff",
+                        "outline-variant": "#bfc9c1",
+                        "surface-dim": "#d8dbd7",
+                        "data-blue": "#4361EE",
+                        "on-tertiary-fixed": "#390b0e",
+                        "on-tertiary-fixed-variant": "#6f3537",
+                        "tertiary": "#713638",
+                        "inverse-on-surface": "#eff1ed",
+                        "surface-tint": "#2c694e",
+                        "outline": "#707973",
+                        "surface": "#f8faf6",
+                        "on-secondary-fixed": "#331200",
+                        "background": "#f8faf6",
+                        "inverse-primary": "#95d4b3",
+                        "surface-container-highest": "#e1e3df",
+                        "secondary-fixed-dim": "#ffb68d",
+                        "on-error": "#ffffff",
+                        "inverse-surface": "#2e312f",
+                        "surface-container": "#eceeea",
+                        "tertiary-fixed-dim": "#ffb3b3",
+                        "energy-orange-light": "#FFB385",
+                        "on-background": "#191c1a",
+                        "secondary": "#9b4500",
+                        "secondary-fixed": "#ffdbc9",
+                        "on-primary": "#ffffff",
+                        "surface-container-lowest": "#ffffff",
+                        "border-subtle": "#E9ECEF",
+                        "on-error-container": "#93000a",
+                        "on-tertiary": "#ffffff",
+                        "secondary-container": "#fc8a40",
+                        "surface-container-low": "#f2f4f0",
+                        "on-tertiary-container": "#ffcfce",
+                        "tertiary-fixed": "#ffdad9",
+                        "on-surface-variant": "#404943",
+                        "on-primary-container": "#a8e7c5",
+                        "surface-bright": "#f8faf6",
+                        "surface-gray": "#F8F9FA",
+                        "on-secondary-container": "#672c00",
+                        "on-surface": "#191c1a",
+                        "primary": "#0f5238",
+                        "on-secondary-fixed-variant": "#763300",
+                        "primary-fixed-dim": "#95d4b3",
+                        "error-red": "#E63946",
+                        "on-primary-fixed-variant": "#0e5138",
+                        "health-green-vibrant": "#40916C",
+                        "on-primary-fixed": "#002114",
+                        "error-container": "#ffdad6"
+                    },
+                    borderRadius: {
+                        DEFAULT: "0.25rem",
+                        lg: "0.5rem",
+                        xl: "0.75rem",
+                        full: "9999px"
+                    },
+                    spacing: {
+                        "stack-md": "12px",
+                        "gutter": "16px",
+                        "container-padding": "20px",
+                        "stack-lg": "24px",
+                        "stack-sm": "4px",
+                        "base": "8px"
+                    },
+                    fontFamily: {
+                        "headline-lg-mobile": ["Inter"],
+                        "button-text": ["Inter"],
+                        "headline-lg": ["Inter"],
+                        "body-md": ["Inter"],
+                        "label-caps": ["JetBrains Mono"],
+                        "metric-display": ["Inter"]
+                    },
+                    fontSize: {
+                        "headline-lg-mobile": ["24px", { lineHeight: "32px", fontWeight: "700" }],
+                        "button-text": ["16px", { lineHeight: "20px", fontWeight: "600" }],
+                        "headline-lg": ["32px", { lineHeight: "40px", letterSpacing: "-0.02em", fontWeight: "700" }],
+                        "body-md": ["16px", { lineHeight: "24px", fontWeight: "400" }],
+                        "label-caps": ["12px", { lineHeight: "16px", letterSpacing: "0.05em", fontWeight: "600" }],
+                        "metric-display": ["48px", { lineHeight: "48px", letterSpacing: "-0.04em", fontWeight: "800" }]
+                    }
+                }
+            }
+        };
+    </script>
+<style>
+        .backdrop-blur-sm { backdrop-filter: blur(4px); }
+        .slide-up { animation: slideUp 0.3s ease-out forwards; }
+        @keyframes slideUp {
+            from { transform: translateY(100%); opacity: 0; }
+            to { transform: translateY(0); opacity: 1; }
+        }
+    </style>
+<style>
+    body {
+      min-height: max(884px, 100dvh);
+    }
+  </style>
+  </head>
+<body class="bg-surface font-body-md text-on-surface h-screen overflow-hidden flex flex-col md:flex-row">
+<!-- Blurred Background (Simulating App Content) -->
+<div class="fixed inset-0 z-0 flex flex-col bg-surface-gray">
+<header class="w-full top-0 sticky bg-surface flex justify-between items-center px-container-padding py-base shadow-sm">
+<span class="material-symbols-outlined text-primary" data-icon="menu">menu</span>
+<h1 class="font-headline-lg-mobile text-headline-lg-mobile font-bold text-primary">PIRINGKU</h1>
+<span class="material-symbols-outlined text-primary" data-icon="search">search</span>
+</header>
+<main class="p-container-padding flex-1 opacity-50 blur-sm pointer-events-none">
+<!-- Dummy content -->
+<div class="h-32 bg-white rounded-xl mb-4 shadow-sm border border-border-subtle"></div>
+<div class="h-64 bg-white rounded-xl mb-4 shadow-sm border border-border-subtle"></div>
+<div class="h-24 bg-white rounded-xl shadow-sm border border-border-subtle"></div>
+</main>
+</div>
+<!-- Modal Overlay -->
+<div class="fixed inset-0 z-50 flex items-end justify-center bg-black/40 backdrop-blur-sm sm:items-center p-4">
+<!-- Modal Content (Bottom Sheet on Mobile, Centered on Web) -->
+<div class="bg-surface w-full max-w-md rounded-t-[24px] sm:rounded-[24px] shadow-2xl flex flex-col slide-up overflow-hidden border border-border-subtle">
+<!-- Handle for mobile -->
+<div class="w-full flex justify-center pt-4 pb-2 sm:hidden">
+<div class="w-12 h-1.5 bg-outline-variant rounded-full"></div>
+</div>
+<div class="px-container-padding pt-4 sm:pt-6 pb-2 flex justify-between items-center border-b border-border-subtle">
+<h2 class="font-headline-lg-mobile text-headline-lg-mobile text-on-surface">Update Food</h2>
+<button class="text-on-surface-variant hover:text-on-surface transition-colors p-2 rounded-full hover:bg-surface-variant">
+<span class="material-symbols-outlined" data-icon="close">close</span>
+</button>
+</div>
+<div class="p-container-padding flex flex-col gap-stack-lg overflow-y-auto max-h-[618px]">
+<!-- Food Info Summary -->
+<div class="flex items-center gap-gutter bg-surface-container-low p-4 rounded-xl">
+<div class="w-16 h-16 rounded-lg bg-surface-variant flex-shrink-0 overflow-hidden relative">
+<img alt="Food Image" class="w-full h-full object-cover" data-alt="A close-up, appetizing shot of a healthy bowl meal containing mixed greens, sliced avocado, and grilled chicken breast. The lighting is bright and soft, emphasizing fresh textures and vibrant colors. The overall aesthetic is clean, modern, and aligned with a health-conscious nutritional tracking app." src="https://lh3.googleusercontent.com/aida-public/AB6AXuBInQ7ejsxej7lT_TzYOTkcO0bQjPO0hoMRZBVJe2qA2YAV-hMyIyAwPkKXO2oIPi8nMwGnXhR0s5DfNIJLfovjYH5TAF5jhVYQ44LYWntR9NOYQp4S5nSGttiDooaSp9s2XdLbIqv62kcqDKM-yRs6aaOT3dCao1rsp4FmqkpugqWEOTVl0EMvbm1yo46-sj9XgpfkkE-n2PzXCDIecrAYKflIeSfI2A3MZIBUzoNL3maCEhVccrdwOqi5MEh9oW-mCI4Zq5Kq42M"/>
+</div>
+<div>
+<h3 class="font-button-text text-button-text text-on-surface">Avocado Chicken Bowl</h3>
+<p class="font-body-md text-body-md text-on-surface-variant mt-1">450 kcal per serving</p>
+</div>
+</div>
+<!-- Stepper Portion Control -->
+<div class="flex flex-col gap-stack-sm">
+<label class="font-label-caps text-label-caps text-on-surface-variant uppercase">Portions</label>
+<div class="flex items-center justify-between bg-surface border border-border-subtle rounded-full p-2 w-full max-w-[200px] mx-auto shadow-sm">
+<button aria-label="Decrease portion" class="w-10 h-10 rounded-full flex items-center justify-center bg-surface-container-high text-primary hover:bg-surface-variant transition-colors">
+<span class="material-symbols-outlined" data-icon="remove">remove</span>
+</button>
+<span class="font-metric-display text-[24px] font-bold text-on-surface px-4">1.5</span>
+<button aria-label="Increase portion" class="w-10 h-10 rounded-full flex items-center justify-center bg-primary-container text-on-primary-container hover:bg-surface-tint hover:text-white transition-colors">
+<span class="material-symbols-outlined" data-icon="add">add</span>
+</button>
+</div>
+<p class="text-center font-body-md text-sm text-outline mt-1">Total: 675 kcal</p>
+</div>
+<!-- Macros Recalculation Preview (Bento-style mini grid) -->
+<div class="grid grid-cols-3 gap-stack-md">
+<div class="bg-surface-container-low p-3 rounded-lg flex flex-col items-center">
+<span class="font-label-caps text-[10px] text-data-blue uppercase mb-1">Protein</span>
+<span class="font-button-text text-on-surface">32g</span>
+</div>
+<div class="bg-surface-container-low p-3 rounded-lg flex flex-col items-center">
+<span class="font-label-caps text-[10px] text-energy-orange-light uppercase mb-1">Fat</span>
+<span class="font-button-text text-on-surface">24g</span>
+</div>
+<div class="bg-surface-container-low p-3 rounded-lg flex flex-col items-center">
+<span class="font-label-caps text-[10px] text-health-green-vibrant uppercase mb-1">Carbs</span>
+<span class="font-button-text text-on-surface">45g</span>
+</div>
+</div>
+</div>
+<!-- Action Buttons -->
+<div class="p-container-padding border-t border-border-subtle flex flex-col gap-stack-md pb-safe">
+<button class="w-full bg-primary text-on-primary font-button-text text-button-text py-4 rounded-xl shadow-md hover:bg-surface-tint transition-colors flex justify-center items-center gap-2">
+<span class="material-symbols-outlined" data-icon="check">check</span>
+                    Save Changes
+                </button>
+<button class="w-full bg-surface text-error-red font-button-text text-button-text py-4 rounded-xl border border-error-container hover:bg-error-container/20 transition-colors flex justify-center items-center gap-2">
+<span class="material-symbols-outlined" data-icon="delete">delete</span>
+                    Remove from Journal
+                </button>
+</div>
+</div>
+</div>
+<!-- Simulated Snack-bar (Confirmation) -->
+<div class="fixed bottom-[80px] left-0 right-0 z-[60] flex justify-center pointer-events-none px-4">
+<div class="bg-inverse-surface text-inverse-on-surface px-4 py-3 rounded-lg shadow-lg flex items-center gap-4 pointer-events-auto slide-up w-full max-w-sm">
+<span class="material-symbols-outlined text-inverse-primary" data-icon="info">info</span>
+<span class="font-body-md text-sm flex-1">Item updated successfully.</span>
+<button class="font-button-text text-sm text-secondary-container hover:text-energy-orange-light transition-colors uppercase tracking-wide">
+                Undo
+            </button>
+</div>
+</div>
+<!-- Bottom Navigation Shell (Suppressed contextually if this was a standalone page, but included as per instructions if needed to show context, though instructions say to suppress on transactional. We'll leave it in background to show the modal context over the app) -->
+<nav class="fixed bottom-0 left-0 w-full z-40 flex justify-around items-center px-base pb-safe pt-2 bg-surface border-t border-border-subtle shadow-lg h-[64px] md:hidden blur-sm opacity-50">
+<div class="flex flex-col items-center justify-center text-on-surface-variant px-4 py-1">
+<span class="material-symbols-outlined" data-icon="book">book</span>
+<span class="font-label-caps text-[10px]">Journal</span>
+</div>
+<div class="flex flex-col items-center justify-center text-on-surface-variant px-4 py-1">
+<span class="material-symbols-outlined" data-icon="leaderboard">leaderboard</span>
+<span class="font-label-caps text-[10px]">Stats</span>
+</div>
+<div class="flex flex-col items-center justify-center text-on-surface-variant px-4 py-1">
+<span class="material-symbols-outlined" data-icon="restaurant_menu">restaurant_menu</span>
+<span class="font-label-caps text-[10px]">Recipes</span>
+</div>
+<div class="flex flex-col items-center justify-center text-on-surface-variant px-4 py-1">
+<span class="material-symbols-outlined" data-icon="person">person</span>
+<span class="font-label-caps text-[10px]">Profile</span>
+</div>
+</nav>
+</body></html>

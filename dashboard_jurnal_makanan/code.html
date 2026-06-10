@@ -1,0 +1,269 @@
+<!DOCTYPE html><html lang="id" style=""><head>
+<meta charset="utf-8">
+<meta content="width=device-width, initial-scale=1.0" name="viewport">
+<title>Piringku - Food Journal</title>
+<!-- Material Symbols -->
+<link href="https://fonts.googleapis.com/css2?family=Material+Symbols+Outlined:wght,FILL@100..700,0..1&amp;display=swap" rel="stylesheet">
+<!-- Google Fonts -->
+<link href="https://fonts.googleapis.com" rel="preconnect">
+<link crossorigin="" href="https://fonts.gstatic.com" rel="preconnect">
+<link href="https://fonts.googleapis.com/css2?family=Inter:wght@400;600;700;800&amp;family=JetBrains+Mono:wght@600&amp;display=swap" rel="stylesheet">
+<link href="https://fonts.googleapis.com/css2?family=Material+Symbols+Outlined:wght,FILL@100..700,0..1&amp;display=swap" rel="stylesheet">
+<!-- Tailwind CSS -->
+<script src="https://cdn.tailwindcss.com?plugins=forms,container-queries"></script>
+<!-- Tailwind Config -->
+<script id="tailwind-config">
+        tailwind.config = {
+            darkMode: "class",
+            theme: {
+                extend: {
+                    "colors": {
+                            "surface-variant": "#e1e3df",
+                            "error": "#ba1a1a",
+                            "surface-container-high": "#e7e9e5",
+                            "primary-fixed": "#b1f0ce",
+                            "tertiary-container": "#8d4d4e",
+                            "primary-container": "#2d6a4f",
+                            "on-secondary": "#ffffff",
+                            "outline-variant": "#bfc9c1",
+                            "surface-dim": "#d8dbd7",
+                            "data-blue": "#4361EE",
+                            "on-tertiary-fixed": "#390b0e",
+                            "on-tertiary-fixed-variant": "#6f3537",
+                            "tertiary": "#713638",
+                            "inverse-on-surface": "#eff1ed",
+                            "surface-tint": "#2c694e",
+                            "outline": "#707973",
+                            "surface": "#f8faf6",
+                            "on-secondary-fixed": "#331200",
+                            "background": "#f8faf6",
+                            "inverse-primary": "#95d4b3",
+                            "surface-container-highest": "#e1e3df",
+                            "secondary-fixed-dim": "#ffb68d",
+                            "on-error": "#ffffff",
+                            "inverse-surface": "#2e312f",
+                            "surface-container": "#eceeea",
+                            "tertiary-fixed-dim": "#ffb3b3",
+                            "energy-orange-light": "#FFB385",
+                            "on-background": "#191c1a",
+                            "secondary": "#9b4500",
+                            "secondary-fixed": "#ffdbc9",
+                            "on-primary": "#ffffff",
+                            "surface-container-lowest": "#ffffff",
+                            "border-subtle": "#E9ECEF",
+                            "on-error-container": "#93000a",
+                            "on-tertiary": "#ffffff",
+                            "secondary-container": "#fc8a40",
+                            "surface-container-low": "#f2f4f0",
+                            "on-tertiary-container": "#ffcfce",
+                            "tertiary-fixed": "#ffdad9",
+                            "on-surface-variant": "#404943",
+                            "on-primary-container": "#a8e7c5",
+                            "surface-bright": "#f8faf6",
+                            "surface-gray": "#F8F9FA",
+                            "on-secondary-container": "#672c00",
+                            "on-surface": "#191c1a",
+                            "primary": "#0f5238",
+                            "on-secondary-fixed-variant": "#763300",
+                            "primary-fixed-dim": "#95d4b3",
+                            "error-red": "#E63946",
+                            "on-primary-fixed-variant": "#0e5138",
+                            "health-green-vibrant": "#40916C",
+                            "on-primary-fixed": "#002114",
+                            "error-container": "#ffdad6"
+                    },
+                    "borderRadius": {
+                            "DEFAULT": "0.25rem",
+                            "lg": "0.5rem",
+                            "xl": "0.75rem",
+                            "full": "9999px"
+                    },
+                    "spacing": {
+                            "stack-md": "12px",
+                            "gutter": "16px",
+                            "container-padding": "20px",
+                            "stack-lg": "24px",
+                            "stack-sm": "4px",
+                            "base": "8px"
+                    },
+                    "fontFamily": {
+                            "headline-lg-mobile": ["Inter"],
+                            "button-text": ["Inter"],
+                            "headline-lg": ["Inter"],
+                            "body-md": ["Inter"],
+                            "label-caps": ["JetBrains Mono"],
+                            "metric-display": ["Inter"]
+                    },
+                    "fontSize": {
+                            "headline-lg-mobile": ["24px", {"lineHeight": "32px", "fontWeight": "700"}],
+                            "button-text": ["16px", {"lineHeight": "20px", "fontWeight": "600"}],
+                            "headline-lg": ["32px", {"lineHeight": "40px", "letterSpacing": "-0.02em", "fontWeight": "700"}],
+                            "body-md": ["16px", {"lineHeight": "24px", "fontWeight": "400"}],
+                            "label-caps": ["12px", {"lineHeight": "16px", "letterSpacing": "0.05em", "fontWeight": "600"}],
+                            "metric-display": ["48px", {"lineHeight": "48px", "letterSpacing": "-0.04em", "fontWeight": "800"}]
+                    }
+                }
+            }
+        }
+    </script>
+<style>
+        /* Custom utilities for specific shadow and haptic feel */
+        .shadow-hero { box-shadow: 0 4px 16px rgba(45, 106, 79, 0.12); }
+        .shadow-fab { box-shadow: 0 8px 20px rgba(45, 106, 79, 0.2); }
+        .haptic-active:active { transform: scale(0.96); transition: transform 0.1s cubic-bezier(0.4, 0, 0.2, 1); }
+        
+        /* Hide scrollbar for cleaner look */
+        ::-webkit-scrollbar { width: 0px; background: transparent; }
+    </style>
+</head>
+<body class="bg-background text-on-background font-body-md text-body-md min-h-screen flex flex-col antialiased">
+<!-- TopAppBar (from JSON) -->
+<header class="w-full top-0 sticky bg-surface dark:bg-on-background shadow-none flex justify-between items-center px-container-padding py-base z-40">
+
+<h1 class="font-headline-lg-mobile text-headline-lg-mobile font-bold text-primary dark:text-primary-fixed">PIRINGKU</h1>
+
+</header>
+<!-- Main Scrollable Area -->
+<main class="flex-1 overflow-y-auto pb-[100px]"> <!-- padding bottom for nav shell -->
+<!-- Date & Target Header -->
+<div class="px-container-padding py-stack-md flex justify-between items-center bg-surface sticky top-[60px] z-30 shadow-sm border-b border-surface-container-high">
+<button class="flex items-center gap-2 text-on-surface hover:text-primary transition-colors group">
+<span class="material-symbols-outlined text-on-surface-variant group-hover:text-primary">calendar_today</span>
+<span class="font-button-text text-button-text font-bold">Hari Ini, 24 Okt</span>
+<span class="material-symbols-outlined text-on-surface-variant text-sm">expand_more</span>
+</button>
+<div class="flex flex-col items-end">
+<span class="font-label-caps text-label-caps text-on-surface-variant">TARGET</span>
+<span class="font-button-text text-button-text font-bold text-primary">2000 kkal</span>
+</div>
+</div>
+<!-- Hero Section: Macro Assessment Widget -->
+<section class="mx-container-padding mt-stack-lg mb-stack-lg">
+<div class="bg-surface-container-lowest rounded-xl p-stack-lg shadow-hero flex flex-col items-center">
+<!-- Circular Progress Bar -->
+<div class="relative w-48 h-48 flex items-center justify-center mb-stack-lg">
+<svg class="w-full h-full transform -rotate-90" viewBox="0 0 120 120">
+<!-- Track -->
+<circle class="text-surface-variant" cx="60" cy="60" fill="none" r="54" stroke="currentColor" stroke-width="8"></circle>
+<!-- Indicator (approx 37.5% used, 62.5% remaining) -->
+<circle class="text-health-green-vibrant" cx="60" cy="60" fill="none" r="54" stroke="currentColor" stroke-dasharray="339.29" stroke-dashoffset="127.23" stroke-linecap="round" stroke-width="8"></circle>
+</svg>
+<div class="absolute flex flex-col items-center text-center">
+<span class="font-metric-display text-metric-display text-on-surface">1,250</span>
+<span class="font-button-text text-button-text text-on-surface-variant mt-1">Sisa Kalori</span>
+</div>
+</div>
+<!-- Linear Macro Bars -->
+<div class="w-full space-y-stack-md">
+<!-- Protein -->
+<div class="flex flex-col gap-1">
+<div class="flex justify-between font-label-caps text-label-caps">
+<span class="text-on-surface">Protein</span>
+<span class="text-on-surface-variant">45g / 150g</span>
+</div>
+<div class="w-full h-1.5 bg-surface-variant rounded-full overflow-hidden">
+<div class="h-full bg-data-blue rounded-full" style="width: 30%"></div>
+</div>
+</div>
+<!-- Lemak -->
+<div class="flex flex-col gap-1">
+<div class="flex justify-between font-label-caps text-label-caps">
+<span class="text-on-surface">Lemak</span>
+<span class="text-on-surface-variant">30g / 65g</span>
+</div>
+<div class="w-full h-1.5 bg-surface-variant rounded-full overflow-hidden">
+<div class="h-full bg-secondary-container rounded-full" style="width: 46%"></div>
+</div>
+</div>
+<!-- Karbo -->
+<div class="flex flex-col gap-1">
+<div class="flex justify-between font-label-caps text-label-caps">
+<span class="text-on-surface">Karbo</span>
+<span class="text-on-surface-variant">120g / 250g</span>
+</div>
+<div class="w-full h-1.5 bg-surface-variant rounded-full overflow-hidden">
+<div class="h-full bg-health-green-vibrant rounded-full" style="width: 48%"></div>
+</div>
+</div>
+</div>
+</div>
+</section>
+<!-- Meal Categories List -->
+<section class="px-container-padding space-y-stack-lg">
+<!-- Sarapan -->
+<div class="flex flex-col gap-stack-sm">
+<div class="flex justify-between items-end mb-2">
+<h2 class="font-button-text text-button-text text-on-surface">Sarapan</h2>
+<span class="font-label-caps text-label-caps text-on-surface-variant">350 kkal</span>
+</div>
+<!-- Item Card -->
+<div class="bg-surface-container-lowest border border-border-subtle rounded-lg p-stack-md flex justify-between items-center haptic-active transition-all hover:shadow-md">
+<div class="flex flex-col">
+<span class="font-body-md text-body-md font-semibold text-on-surface">Oatmeal Pisang &amp; Madu</span>
+<span class="font-label-caps text-label-caps text-on-surface-variant mt-1">1 mangkuk sedang</span>
+</div>
+<div class="flex items-center gap-3">
+<span class="font-button-text text-button-text text-primary font-bold">350</span>
+<button class="material-symbols-outlined text-outline hover:text-on-surface transition-colors">more_vert</button>
+</div>
+</div>
+</div>
+<!-- Makan Siang -->
+<div class="flex flex-col gap-stack-sm">
+<div class="flex justify-between items-end mb-2">
+<h2 class="font-button-text text-button-text text-on-surface">Makan Siang</h2>
+<span class="font-label-caps text-label-caps text-on-surface-variant">400 kkal</span>
+</div>
+<!-- Item Card -->
+<div class="bg-surface-container-lowest border border-border-subtle rounded-lg p-stack-md flex justify-between items-center haptic-active transition-all hover:shadow-md">
+<div class="flex flex-col">
+<span class="font-body-md text-body-md font-semibold text-on-surface">Nasi Goreng Seafood</span>
+<span class="font-label-caps text-label-caps text-on-surface-variant mt-1">1 porsi</span>
+</div>
+<div class="flex items-center gap-3">
+<span class="font-button-text text-button-text text-primary font-bold">400</span>
+<button class="material-symbols-outlined text-outline hover:text-on-surface transition-colors">more_vert</button>
+</div>
+</div>
+</div>
+<!-- Makan Malam (Empty State implicitly handled by an 'add' prompt if needed, but we'll show empty placeholder text) -->
+<div class="flex flex-col gap-stack-sm">
+<div class="flex justify-between items-end mb-2">
+<h2 class="font-button-text text-button-text text-on-surface">Makan Malam</h2>
+<span class="font-label-caps text-label-caps text-on-surface-variant">0 kkal</span>
+</div>
+<div class="bg-surface-container-low border border-dashed border-outline-variant rounded-lg p-stack-md flex justify-center items-center haptic-active cursor-pointer hover:bg-surface-container transition-colors">
+<span class="font-button-text text-button-text text-on-surface-variant flex items-center gap-2">
+<span class="material-symbols-outlined">add</span> Tambah Menu
+                    </span>
+</div>
+</div>
+</section>
+</main>
+<!-- Floating Action Button (FAB) -->
+<button class="fixed bottom-24 right-container-padding w-14 h-14 bg-primary text-on-primary rounded-full shadow-fab flex items-center justify-center haptic-active z-40 hover:bg-surface-tint transition-colors">
+<span class="material-symbols-outlined text-3xl">add</span>
+</button>
+<!-- BottomNavBar (from JSON) - Journal Active -->
+<nav class="fixed bottom-0 left-0 w-full z-50 flex justify-around items-center px-base pb-safe pt-2 bg-surface dark:bg-on-background shadow-lg rounded-t-xl">
+<!-- Active: Journal -->
+<button class="flex flex-col items-center justify-center bg-primary-container dark:bg-on-primary-fixed-variant text-on-primary-container dark:text-primary-fixed rounded-2xl px-4 py-1 hover:bg-surface-container-high dark:hover:bg-surface-container-highest transition-colors active:scale-90 duration-150">
+<span class="material-symbols-outlined" style="font-variation-settings: &quot;FILL&quot; 1;">book</span>
+<span class="font-label-caps text-label-caps mt-1">Journal</span>
+</button>
+<!-- Inactive: Stats -->
+<button class="flex flex-col items-center justify-center text-on-surface-variant dark:text-outline-variant px-4 py-1 hover:bg-surface-container-high dark:hover:bg-surface-container-highest transition-colors active:scale-90 duration-150">
+<span class="material-symbols-outlined">leaderboard</span>
+<span class="font-label-caps text-label-caps mt-1">Stats</span>
+</button>
+<!-- Inactive: Recipes -->
+<button class="flex flex-col items-center justify-center text-on-surface-variant dark:text-outline-variant px-4 py-1 hover:bg-surface-container-high dark:hover:bg-surface-container-highest transition-colors active:scale-90 duration-150"><span class="material-symbols-outlined">search</span><span class="font-label-caps text-label-caps mt-1">Cari</span></button>
+<!-- Inactive: Profile -->
+<button class="flex flex-col items-center justify-center text-on-surface-variant dark:text-outline-variant px-4 py-1 hover:bg-surface-container-high dark:hover:bg-surface-container-highest transition-colors active:scale-90 duration-150">
+<span class="material-symbols-outlined">person</span>
+<span class="font-label-caps text-label-caps mt-1">Profile</span>
+</button>
+</nav>
+
+
+</body></html>

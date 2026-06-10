@@ -1,0 +1,216 @@
+<!DOCTYPE html><html lang="id" style=""><head>
+<meta charset="utf-8">
+<meta content="width=device-width, initial-scale=1.0" name="viewport">
+<title>Pencarian Makanan - PIRINGKU</title>
+<script src="https://cdn.tailwindcss.com?plugins=forms,container-queries"></script>
+<link href="https://fonts.googleapis.com/css2?family=Inter:wght@400;600;700;800&amp;family=JetBrains+Mono:wght@600&amp;display=swap" rel="stylesheet">
+<link href="https://fonts.googleapis.com/css2?family=Material+Symbols+Outlined:wght,FILL@100..700,0..1&amp;display=swap" rel="stylesheet">
+<link href="https://fonts.googleapis.com/css2?family=Material+Symbols+Outlined:wght,FILL@100..700,0..1&amp;display=swap" rel="stylesheet">
+<script id="tailwind-config">
+        tailwind.config = {
+            darkMode: "class",
+            theme: {
+                extend: {
+                    "colors": {
+                            "surface-variant": "#e1e3df",
+                            "error": "#ba1a1a",
+                            "surface-container-high": "#e7e9e5",
+                            "primary-fixed": "#b1f0ce",
+                            "tertiary-container": "#8d4d4e",
+                            "primary-container": "#2d6a4f",
+                            "on-secondary": "#ffffff",
+                            "outline-variant": "#bfc9c1",
+                            "surface-dim": "#d8dbd7",
+                            "data-blue": "#4361EE",
+                            "on-tertiary-fixed": "#390b0e",
+                            "on-tertiary-fixed-variant": "#6f3537",
+                            "tertiary": "#713638",
+                            "inverse-on-surface": "#eff1ed",
+                            "surface-tint": "#2c694e",
+                            "outline": "#707973",
+                            "surface": "#f8faf6",
+                            "on-secondary-fixed": "#331200",
+                            "background": "#f8faf6",
+                            "inverse-primary": "#95d4b3",
+                            "surface-container-highest": "#e1e3df",
+                            "secondary-fixed-dim": "#ffb68d",
+                            "on-error": "#ffffff",
+                            "inverse-surface": "#2e312f",
+                            "surface-container": "#eceeea",
+                            "tertiary-fixed-dim": "#ffb3b3",
+                            "energy-orange-light": "#FFB385",
+                            "on-background": "#191c1a",
+                            "secondary": "#9b4500",
+                            "secondary-fixed": "#ffdbc9",
+                            "on-primary": "#ffffff",
+                            "surface-container-lowest": "#ffffff",
+                            "border-subtle": "#E9ECEF",
+                            "on-error-container": "#93000a",
+                            "on-tertiary": "#ffffff",
+                            "secondary-container": "#fc8a40",
+                            "surface-container-low": "#f2f4f0",
+                            "on-tertiary-container": "#ffcfce",
+                            "tertiary-fixed": "#ffdad9",
+                            "on-surface-variant": "#404943",
+                            "on-primary-container": "#a8e7c5",
+                            "surface-bright": "#f8faf6",
+                            "surface-gray": "#F8F9FA",
+                            "on-secondary-container": "#672c00",
+                            "on-surface": "#191c1a",
+                            "primary": "#0f5238",
+                            "on-secondary-fixed-variant": "#763300",
+                            "primary-fixed-dim": "#95d4b3",
+                            "error-red": "#E63946",
+                            "on-primary-fixed-variant": "#0e5138",
+                            "health-green-vibrant": "#40916C",
+                            "on-primary-fixed": "#002114",
+                            "error-container": "#ffdad6"
+                    },
+                    "borderRadius": {
+                            "DEFAULT": "0.25rem",
+                            "lg": "0.5rem",
+                            "xl": "0.75rem",
+                            "full": "9999px"
+                    },
+                    "spacing": {
+                            "stack-md": "12px",
+                            "gutter": "16px",
+                            "container-padding": "20px",
+                            "stack-lg": "24px",
+                            "stack-sm": "4px",
+                            "base": "8px"
+                    },
+                    "fontFamily": {
+                            "headline-lg-mobile": ["Inter"],
+                            "button-text": ["Inter"],
+                            "headline-lg": ["Inter"],
+                            "body-md": ["Inter"],
+                            "label-caps": ["JetBrains Mono"],
+                            "metric-display": ["Inter"]
+                    },
+                    "fontSize": {
+                            "headline-lg-mobile": ["24px", {"lineHeight": "32px", "fontWeight": "700"}],
+                            "button-text": ["16px", {"lineHeight": "20px", "fontWeight": "600"}],
+                            "headline-lg": ["32px", {"lineHeight": "40px", "letterSpacing": "-0.02em", "fontWeight": "700"}],
+                            "body-md": ["16px", {"lineHeight": "24px", "fontWeight": "400"}],
+                            "label-caps": ["12px", {"lineHeight": "16px", "letterSpacing": "0.05em", "fontWeight": "600"}],
+                            "metric-display": ["48px", {"lineHeight": "48px", "letterSpacing": "-0.04em", "fontWeight": "800"}]
+                    }
+                }
+            }
+        }
+    </script>
+<style>
+        .shimmer {
+            animation: shimmer 2s infinite linear;
+            background: linear-gradient(to right, #f2f4f0 4%, #e1e3df 25%, #f2f4f0 36%);
+            background-size: 1000px 100%;
+        }
+        @keyframes shimmer {
+            0% { background-position: -1000px 0; }
+            100% { background-position: 1000px 0; }
+        }
+    </style>
+</head>
+<body class="bg-background text-on-background font-body-md text-body-md antialiased min-h-screen pb-24">
+<!-- Header Search Bar -->
+<header class="sticky top-0 w-full bg-surface z-40 px-container-padding py-base border-b border-border-subtle shadow-sm">
+<div class="flex items-center gap-gutter">
+<button class="text-on-surface-variant hover:opacity-80 transition-opacity">
+
+</button>
+<div class="relative flex-grow">
+<span class="material-symbols-outlined absolute left-3 top-1/2 -translate-y-1/2 text-on-surface-variant">search</span>
+<input autofocus="" class="w-full bg-surface-container-low border-none rounded-full py-2 pl-10 pr-4 text-body-md font-body-md focus:ring-2 focus:ring-primary-fixed-dim transition-shadow outline-none text-on-surface placeholder:text-on-surface-variant/50" placeholder="Cari makanan..." type="text">
+</div>
+<button class="text-on-surface-variant hover:opacity-80 transition-opacity">
+<span class="material-symbols-outlined" style="font-variation-settings: &quot;FILL&quot; 0;">qr_code_scanner</span>
+</button>
+</div>
+<!-- Navigation Tabs -->
+<div class="flex mt-stack-md gap-4 overflow-x-auto no-scrollbar pb-1">
+<button class="whitespace-nowrap px-4 py-2 rounded-full bg-primary-container text-on-primary-container font-button-text text-button-text transition-transform active:scale-95">Pencarian API</button>
+<button class="whitespace-nowrap px-4 py-2 rounded-full text-on-surface-variant hover:bg-surface-variant transition-colors font-button-text text-button-text">Riwayat Saya</button>
+<button class="whitespace-nowrap px-4 py-2 rounded-full text-on-surface-variant hover:bg-surface-variant transition-colors font-button-text text-button-text">Barcode Scanner</button>
+</div>
+</header>
+<!-- Main Content -->
+<main class="px-container-padding py-stack-lg max-w-3xl mx-auto">
+<!-- Section Title -->
+<h2 class="font-button-text text-button-text text-on-surface mb-stack-md">Hasil Pencarian</h2>
+<!-- List View -->
+<div class="flex flex-col gap-stack-md">
+<!-- Skeleton Loaders (Simulating API fetch) -->
+<div class="flex items-center p-base bg-surface-container-lowest rounded-xl border border-border-subtle">
+<div class="w-16 h-16 rounded-lg shimmer mr-gutter"></div>
+<div class="flex-grow">
+<div class="h-5 w-3/4 shimmer rounded mb-2"></div>
+<div class="h-4 w-1/2 shimmer rounded"></div>
+</div>
+<div class="h-6 w-12 shimmer rounded ml-gutter"></div>
+</div>
+<div class="flex items-center p-base bg-surface-container-lowest rounded-xl border border-border-subtle">
+<div class="w-16 h-16 rounded-lg shimmer mr-gutter"></div>
+<div class="flex-grow">
+<div class="h-5 w-2/3 shimmer rounded mb-2"></div>
+<div class="h-4 w-1/3 shimmer rounded"></div>
+</div>
+<div class="h-6 w-12 shimmer rounded ml-gutter"></div>
+</div>
+<!-- Actual Results (Simulated loaded state) -->
+<div class="flex items-center p-base bg-surface-container-lowest rounded-xl border border-border-subtle active:scale-[0.98] transition-transform cursor-pointer hover:shadow-md">
+<img alt="Salad Mangkuk Sehat" class="w-16 h-16 rounded-lg object-cover mr-gutter" data-alt="A vibrant overhead shot of a fresh, healthy salad bowl filled with mixed greens, cherry tomatoes, sliced cucumbers, and a light vinaigrette dressing. The image is brightly lit, showcasing the fresh colors of the vegetables against a clean, modern white background, suitable for a health and nutrition app." src="https://lh3.googleusercontent.com/aida-public/AB6AXuAYeiPR_URfM4hbfxgkoah7E3I4D-9mE2CBDSN9p39Pk4HeQbOXgVXufkUvl59z1MvaTWXb7j1f3ipdZuTi_qp1zi2oRQ3FeHGejztgTCSABb-EJpmOTi-oAkJNZOqGr6CaIPXGA7BnnDlSGgEizn-T7mjMTTjdevH04-wEgOWR91lenLIaQKpbbecA5ge0dEo8L-ILV49uEAuqUry8n66V_V181ZZQh2j1gmGdvMq1ZXdBloAW-bgE2zB_VevGJop6UgvFl3nIPYM">
+<div class="flex-grow">
+<h3 class="font-button-text text-button-text text-on-surface line-clamp-1">Salad Sayur Segar</h3>
+<p class="text-on-surface-variant text-sm mt-1">1 porsi (200g)</p>
+</div>
+<div class="text-right ml-gutter">
+<span class="font-button-text text-button-text text-primary">120 kcal</span>
+</div>
+</div>
+<div class="flex items-center p-base bg-surface-container-lowest rounded-xl border border-border-subtle active:scale-[0.98] transition-transform cursor-pointer hover:shadow-md">
+<img alt="Dada Ayam Panggang" class="w-16 h-16 rounded-lg object-cover mr-gutter" data-alt="A close-up, appetizing photo of a perfectly grilled chicken breast, resting on a minimalist white plate. The chicken has distinct grill marks and is lightly garnished with herbs. The lighting is warm yet clean, emphasizing the protein-rich aspect of the meal in a modern culinary setting." src="https://lh3.googleusercontent.com/aida-public/AB6AXuCcDEuqZHli3jyRDQSy21XwNpMLvpFjmTxpHF4Ir5OT2-BnE57lEgSulSLLgIRvytT0D0PBe7RmG2TcnGREW_LXP7dS6SSbS6i8ANZKutRcejdXB0WStGVC4w-y7Y_FVq7Z0gACLAB3nq9uElPfoEMLzcYT107NJs4X5V11RjhAoF_hF26n81moO80xS9UzUv7c5dcAfbe7kKFHeIqixeLQ6MK_w9sRPoE1c_6jpoH78QGp_WSltfliiQQpv_keddG5kRDg3D2gGZc">
+<div class="flex-grow">
+<h3 class="font-button-text text-button-text text-on-surface line-clamp-1">Dada Ayam Panggang</h3>
+<p class="text-on-surface-variant text-sm mt-1">1 potong (150g)</p>
+</div>
+<div class="text-right ml-gutter">
+<span class="font-button-text text-button-text text-primary">165 kcal</span>
+</div>
+</div>
+<div class="flex items-center p-base bg-surface-container-lowest rounded-xl border border-border-subtle active:scale-[0.98] transition-transform cursor-pointer hover:shadow-md">
+<div class="w-16 h-16 rounded-lg bg-surface-variant flex items-center justify-center mr-gutter text-on-surface-variant">
+<span class="material-symbols-outlined">restaurant</span>
+</div>
+<div class="flex-grow">
+<h3 class="font-button-text text-button-text text-on-surface line-clamp-1">Nasi Putih</h3>
+<p class="text-on-surface-variant text-sm mt-1">1 centong (100g)</p>
+</div>
+<div class="text-right ml-gutter">
+<span class="font-button-text text-button-text text-primary">130 kcal</span>
+</div>
+</div>
+</div>
+</main>
+<!-- Bottom Navigation Bar (Hidden on md, shown on mobile) -->
+<nav class="md:hidden fixed bottom-0 left-0 w-full z-50 flex justify-around items-center px-base pb-safe pt-2 bg-surface border-t border-border-subtle shadow-lg rounded-t-xl">
+<a class="flex flex-col items-center justify-center text-on-surface-variant px-4 py-1 hover:bg-surface-container-high transition-colors" href="#">
+<span class="material-symbols-outlined">book</span>
+<span class="font-label-caps text-label-caps mt-1">Journal</span>
+</a>
+<a class="flex flex-col items-center justify-center text-on-surface-variant px-4 py-1 hover:bg-surface-container-high transition-colors" href="#">
+<span class="material-symbols-outlined">leaderboard</span>
+<span class="font-label-caps text-label-caps mt-1">Stats</span>
+</a>
+<a class="flex flex-col items-center justify-center bg-primary-container text-on-primary-container rounded-2xl px-4 py-1" href="#">
+<span class="material-symbols-outlined" style="font-variation-settings: &quot;FILL&quot; 1;">search</span>
+<span class="font-label-caps text-label-caps mt-1">Cari</span>
+</a>
+<a class="flex flex-col items-center justify-center text-on-surface-variant px-4 py-1 hover:bg-surface-container-high transition-colors" href="#">
+<span class="material-symbols-outlined">person</span>
+<span class="font-label-caps text-label-caps mt-1">Profile</span>
+</a>
+</nav>
+<!-- Add Button (FAB) -->
+
+</body></html>
