@@ -60,4 +60,6 @@ dependencies {
     implementation("androidx.navigation:navigation-ui-ktx:$nav_version")
     implementation("com.google.android.material:material:1.14.0") // Gunakan versi stabil terbar
     implementation("androidx.navigation:navigation-compose:${nav_version}")
+    implementation(libs.gson)
+    implementation(libs.coil.compose)
 }

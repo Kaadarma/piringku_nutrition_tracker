@@ -23,13 +23,6 @@ fun StatsScreen() {
 }
 
 @Composable
-fun SearchScreen() {
-    Box(modifier = Modifier.fillMaxSize(), contentAlignment = Alignment.Center) {
-        Text(text = "Halaman Cari (Mockup 3)", fontSize = 24.sp)
-    }
-}
-
-@Composable
 fun ProfileScreen() {
     Box(modifier = Modifier.fillMaxSize(), contentAlignment = Alignment.Center) {
         Text(text = "Halaman Profile", fontSize = 24.sp)
