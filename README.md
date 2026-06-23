@@ -35,14 +35,25 @@ app/
 │   │   ├── MainActivity.kt
 │   │   ├── MainScreens.kt
 │   │   ├── data/
-│   │   │   └── FoodRepository.kt
+│   │   │   ├── FoodRepository.kt
+│   │   │   └── JournalRepository.kt
 │   │   ├── model/
-│   │   │   └── FoodItem.kt
+│   │   │   ├── DailyNutrition.kt
+│   │   │   ├── FoodItem.kt
+│   │   │   ├── JournalEntry.kt
+│   │   │   └── MealType.kt
 │   │   └── ui/
+│   │       ├── journal/
+│   │       │   ├── JournalEntryCard.kt
+│   │       │   ├── JournalScreen.kt
+│   │       │   ├── FoodDetailSheet.kt
+│   │       │   └── UpdateDeleteSheet.kt
 │   │       ├── search/
 │   │       │   ├── SearchScreen.kt
 │   │       │   ├── SearchResultCard.kt
 │   │       │   └── SkeletonLoader.kt
+│   │       ├── stats/
+│   │       │   └── StatsScreen.kt
 │   │       └── theme/
 │   │           ├── Color.kt
 │   │           ├── Theme.kt
@@ -124,30 +135,35 @@ val foods = FoodRepository.searchFood("nasi")
 ## 🔧 Development
 
 **Team:**
-- Orang 1: Journal screen
-- Orang 2: Stats screen
-- Orang 3: Search/Cari screen
-- Orang 4: Backend (Room DB)
+- Orang 1: Journal screen (JournalScreen, JournalEntryCard, FoodDetailSheet, UpdateDeleteSheet)
+- Orang 2: Stats screen (StatsScreen)
+- Orang 3: Search/Cari search screen (SearchScreen, SearchResultCard)
+- Orang 4: Backend (Room DB planned)
 
 **Conventions:**
-- Kotlin style: Official Kotlin conventions
-- Compose: Material 3 guidelines
-- Naming: camelCase functions, PascalCase composables
-- Navigation: Bottom nav with 4 routes
+- Kotlin style: Kotlin官方规范
+- Compose: Material 3 指南
+- Naming: 驼峰命名函数，帕斯卡命名可组合项
+- Navigation: 底部导航，4个路由
 
 **Recent Fixes (2026-06-23):**
 - ✅ SkeletonLoader MaterialTheme import
 - ✅ Theme.kt dark mode logic
 - ✅ AndroidManifest INTERNET permission
+- ✅ DateTimeFormatter pattern crash fix (JournalScreen.kt)
+- ✅ P0: Callback state on IO thread → withContext(Main)
+- ✅ P1: Shared ModalBottomSheet state → separate states
+- ✅ P2: Gson exception handling in FoodRepository
 
 Lihat `logs/REPAIR_SUMMARY.md` untuk detail.
 
 ## 📝 Notes
 
-- Single Activity + NavHost architecture
-- Compose Compiler via `kotlin-compose` plugin
-- Room database planned (Orang 4)
-- All design tokens in `ui/theme/`
+- 单一 Activity + NavHost 架构
+- Compose 编译器通过 `kotlin-compose` 插件
+- 已实现 Journal 相关界面（JournalScreen, JournalEntryCard, FoodDetailSheet, UpdateDeleteSheet）
+- Room 数据库计划中（Orang 4）
+- 所有设计令牌位于 `ui/theme/`
 
 ## 📄 License
 
