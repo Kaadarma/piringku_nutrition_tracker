@@ -22,10 +22,14 @@ class FoodRepository private constructor(context: Context) {
         foodCache?.let { return it }
         if (json.isBlank()) return emptyList()
 
-        val type = object : TypeToken<List<FoodItem>>() {}.type
-        val items: List<FoodItem> = Gson().fromJson(json, type)
-        foodCache = items
-        return items
+        return try {
+            val type = object : TypeToken<List<FoodItem>>() {}.type
+            val items: List<FoodItem> = Gson().fromJson(json, type)
+            foodCache = items
+            items
+        } catch (e: Exception) {
+            emptyList()
+        }
     }
 
     fun searchFoods(query: String): List<FoodItem> {

@@ -23,6 +23,8 @@ import androidx.navigation.compose.NavHost
 import androidx.navigation.compose.composable
 import androidx.navigation.compose.currentBackStackEntryAsState
 import androidx.navigation.compose.rememberNavController
+import com.example.piringku.ui.journal.JournalScreen
+import com.example.piringku.ui.stats.StatsScreen
 import com.example.piringku.ui.search.SearchScreen
 import com.example.piringku.ui.theme.PIRINGKUTheme
 

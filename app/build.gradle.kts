@@ -13,7 +13,7 @@ android {
 
     defaultConfig {
         applicationId = "com.example.piringku"
-        minSdk = 21
+        minSdk = 23
         targetSdk = 36
         versionCode = 1
         versionName = "1.0"
@@ -33,6 +33,7 @@ android {
     compileOptions {
         sourceCompatibility = JavaVersion.VERSION_11
         targetCompatibility = JavaVersion.VERSION_11
+        isCoreLibraryDesugaringEnabled = true
     }
     buildFeatures {
         compose = true
@@ -58,8 +59,9 @@ dependencies {
     val nav_version = "2.9.8"
     implementation("androidx.navigation:navigation-fragment-ktx:$nav_version")
     implementation("androidx.navigation:navigation-ui-ktx:$nav_version")
-    implementation("com.google.android.material:material:1.14.0") // Gunakan versi stabil terbar
     implementation("androidx.navigation:navigation-compose:${nav_version}")
     implementation(libs.gson)
     implementation(libs.coil.compose)
+    implementation(libs.lifecycle.viewmodel.compose)
+    coreLibraryDesugaring("com.android.tools:desugar_jdk_libs:2.1.4")
 }
