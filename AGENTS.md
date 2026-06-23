@@ -59,3 +59,45 @@ Theme already updated in `ui/theme/Color.kt`, `Theme.kt`, `Type.kt` to match DES
 - Each screen has mockup in `Aset/` directory (PNG files)
 - SearchScreen exposes `onFoodSelected(food: FoodItem)` callback for integration
 - Orang 4 manages Room database (not yet implemented)
+
+## CLI Development (No Android Studio)
+
+### Setup
+```bash
+# Install Android SDK (or use existing)
+# Ensure adb, emulator in PATH
+
+# Device/Emulator
+adb devices                           # list connected devices
+emulator -list-avds                   # list emulators
+emulator -avd <name>                  # launch emulator
+```
+
+### Build & Deploy
+```bash
+./gradlew assembleDebug --no-daemon   # build APK
+./gradlew installDebug                # install on device
+adb shell am start -n com.example.piringku/.MainActivity
+```
+
+### Testing & Debugging
+```bash
+./gradlew testDebugUnitTest           # unit tests
+./gradlew connectedDebugAndroidTest   # instrumented tests
+adb logcat                            # view logs
+adb logcat | grep piringku            # filter logs
+```
+
+## Recent Fixes (2026-06-23)
+
+### P0 Critical Issues - RESOLVED ✅
+1. **SkeletonLoader.kt:26** - Added missing `MaterialTheme` import
+2. **Theme.kt** - Created `DarkColorScheme`, fixed dark theme logic (line 90)
+3. **AndroidManifest.xml:5** - Added `INTERNET` permission for image loading
+
+Details: See `logs/REPAIR_SUMMARY.md`
+
+## Response
+- setiap response simpan di file logs/nama_file.md gunakan format nama file logs yang deskriptif dalam format.md 
+- gunakan bahasa yang singkat untuk menghemat token
+- Lintasan CLI development tanpa Android Studio didokumentasikan di atas
