@@ -14,3 +14,10 @@ fun ProfileScreen() {
         Text(text = "Halaman Profile", fontSize = 24.sp)
     }
 }
+
+@Composable
+fun DummyPlaceholder(title: String) {
+    Box(modifier = Modifier.fillMaxSize(), contentAlignment = Alignment.Center) {
+        Text(text = title, fontSize = 24.sp)
+    }
+}
