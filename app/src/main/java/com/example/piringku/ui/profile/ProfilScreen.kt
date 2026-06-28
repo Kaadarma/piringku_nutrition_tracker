@@ -1,8 +1,9 @@
 package com.example.piringku.ui.profile
 
+import androidx.compose.foundation.BorderStroke
 import androidx.compose.foundation.background
+import androidx.compose.foundation.border
 import androidx.compose.foundation.clickable
-import androidx.compose.foundation.layout.Arrangement
 import androidx.compose.foundation.layout.Box
 import androidx.compose.foundation.layout.Column
 import androidx.compose.foundation.layout.Row
@@ -17,14 +18,14 @@ import androidx.compose.foundation.rememberScrollState
 import androidx.compose.foundation.shape.CircleShape
 import androidx.compose.foundation.shape.RoundedCornerShape
 import androidx.compose.foundation.verticalScroll
-import androidx.compose.material3.Card
-import androidx.compose.material3.CardDefaults
 import androidx.compose.material.icons.Icons
-import androidx.compose.material.icons.filled.ExitToApp
 import androidx.compose.material.icons.filled.KeyboardArrowRight
-import androidx.compose.material.icons.filled.Notifications
+import androidx.compose.material.icons.filled.Logout
+import androidx.compose.material.icons.filled.NotificationsActive
 import androidx.compose.material.icons.filled.Person
 import androidx.compose.material.icons.filled.TrackChanges
+import androidx.compose.material3.Card
+import androidx.compose.material3.CardDefaults
 import androidx.compose.material3.HorizontalDivider
 import androidx.compose.material3.Icon
 import androidx.compose.material3.MaterialTheme
@@ -45,7 +46,12 @@ import androidx.compose.ui.platform.LocalContext
 import androidx.compose.ui.text.font.FontWeight
 import androidx.compose.ui.unit.dp
 import com.example.piringku.data.UserPreferences
+import com.example.piringku.data.repository.UserProfile
+import com.example.piringku.data.repository.UserRepository
 import com.example.piringku.ui.theme.BorderSubtle
+import com.example.piringku.ui.theme.PrimaryFixed
+import com.example.piringku.ui.theme.SecondaryFixed
+import com.example.piringku.ui.theme.TertiaryFixed
 import kotlinx.coroutines.Dispatchers
 import kotlinx.coroutines.launch
 import kotlinx.coroutines.withContext
@@ -58,20 +64,35 @@ fun ProfilScreen(
 ) {
     val context = LocalContext.current
     val prefs = remember { UserPreferences.getInstance(context) }
+    val userRepo = remember { UserRepository.getInstance(context) }
     val scope = rememberCoroutineScope()
-    val userData by prefs.userData.collectAsState(initial = UserPreferences.UserData())
+    val userProfile by userRepo.userProfile.collectAsState(initial = UserProfile())
 
     Column(
         modifier = Modifier
             .fillMaxSize()
             .background(MaterialTheme.colorScheme.surface),
     ) {
+        Row(
+            modifier = Modifier
+                .fillMaxWidth()
+                .padding(horizontal = 20.dp, vertical = 8.dp),
+            verticalAlignment = Alignment.CenterVertically,
+        ) {
+            Text(
+                text = "PIRINGKU",
+                style = MaterialTheme.typography.headlineSmall,
+                fontWeight = FontWeight.Bold,
+                color = MaterialTheme.colorScheme.primary,
+            )
+        }
+
         Column(
             modifier = Modifier
                 .weight(1f)
                 .verticalScroll(rememberScrollState()),
         ) {
-            Spacer(Modifier.height(24.dp))
+            Spacer(Modifier.height(12.dp))
 
             Column(
                 modifier = Modifier.fillMaxWidth(),
@@ -81,7 +102,8 @@ fun ProfilScreen(
                     modifier = Modifier
                         .size(96.dp)
                         .clip(CircleShape)
-                        .background(MaterialTheme.colorScheme.primaryContainer),
+                        .background(MaterialTheme.colorScheme.primaryContainer)
+                        .border(4.dp, PrimaryFixed, CircleShape),
                     contentAlignment = Alignment.Center,
                 ) {
                     Icon(
@@ -93,8 +115,8 @@ fun ProfilScreen(
                 }
                 Spacer(Modifier.height(12.dp))
                 Text(
-                    text = userData.name.ifBlank { "Pengguna" },
-                    style = MaterialTheme.typography.headlineMedium,
+                    text = userProfile.name.ifBlank { "Pengguna" },
+                    style = MaterialTheme.typography.headlineSmall,
                     fontWeight = FontWeight.Bold,
                 )
             }
@@ -106,16 +128,16 @@ fun ProfilScreen(
                     .fillMaxWidth()
                     .padding(horizontal = 20.dp),
                 shape = RoundedCornerShape(16.dp),
-                colors = androidx.compose.material3.CardDefaults.cardColors(
+                colors = CardDefaults.cardColors(
                     containerColor = MaterialTheme.colorScheme.surfaceContainerLowest,
                 ),
-                border = androidx.compose.material3.CardDefaults.outlinedCardBorder(),
-                elevation = androidx.compose.material3.CardDefaults.cardElevation(0.dp),
+                border = BorderStroke(1.dp, BorderSubtle),
+                elevation = CardDefaults.cardElevation(0.dp),
             ) {
                 Column(modifier = Modifier.padding(8.dp)) {
                     MenuItemWithIcon(
                         icon = Icons.Default.Person,
-                        iconBg = MaterialTheme.colorScheme.primaryContainer,
+                        iconBg = PrimaryFixed,
                         iconTint = MaterialTheme.colorScheme.primary,
                         title = "Data Diri",
                         onClick = onEditDataDiri,
@@ -126,7 +148,7 @@ fun ProfilScreen(
                     )
                     MenuItemWithIcon(
                         icon = Icons.Default.TrackChanges,
-                        iconBg = MaterialTheme.colorScheme.secondaryContainer,
+                        iconBg = SecondaryFixed,
                         iconTint = MaterialTheme.colorScheme.secondary,
                         title = "Progress & Goals",
                         onClick = onProgresGoals,
@@ -136,8 +158,8 @@ fun ProfilScreen(
                         color = BorderSubtle,
                     )
                     MenuItemWithToggle(
-                        icon = Icons.Default.Notifications,
-                        iconBg = MaterialTheme.colorScheme.tertiaryContainer,
+                        icon = Icons.Default.NotificationsActive,
+                        iconBg = TertiaryFixed,
                         iconTint = MaterialTheme.colorScheme.tertiary,
                         title = "Notifikasi",
                         checked = true,
@@ -147,19 +169,49 @@ fun ProfilScreen(
                         modifier = Modifier.padding(horizontal = 16.dp),
                         color = BorderSubtle,
                     )
-                    MenuItemWithIcon(
-                        icon = Icons.Default.ExitToApp,
-                        iconBg = MaterialTheme.colorScheme.errorContainer,
-                        iconTint = MaterialTheme.colorScheme.error,
-                        title = "Keluar",
-                        titleColor = MaterialTheme.colorScheme.error,
-                        onClick = {
-                            scope.launch(Dispatchers.IO) {
-                                prefs.logout()
-                                withContext(Dispatchers.Main) { onLogout() }
+                    // Keluar row
+                    Row(
+                        modifier = Modifier
+                            .fillMaxWidth()
+                            .clickable {
+                                scope.launch(Dispatchers.IO) {
+                                    userRepo.clearUser()
+                                    prefs.logout()
+                                    withContext(Dispatchers.Main) { onLogout() }
+                                }
                             }
-                        },
-                    )
+                            .padding(horizontal = 16.dp, vertical = 12.dp),
+                        verticalAlignment = Alignment.CenterVertically,
+                    ) {
+                        Box(
+                            modifier = Modifier
+                                .size(40.dp)
+                                .clip(CircleShape)
+                                .background(MaterialTheme.colorScheme.errorContainer),
+                            contentAlignment = Alignment.Center,
+                        ) {
+                            Icon(
+                                Icons.Default.Logout,
+                                contentDescription = null,
+                                tint = MaterialTheme.colorScheme.error,
+                                modifier = Modifier.size(24.dp),
+                            )
+                        }
+                        Spacer(Modifier.width(16.dp))
+                        Text(
+                            text = "Keluar",
+                            style = MaterialTheme.typography.bodyLarge,
+                            color = MaterialTheme.colorScheme.error,
+                            fontWeight = FontWeight.SemiBold,
+                            modifier = Modifier.weight(1f),
+                        )
+                        Icon(
+                            Icons.Default.Logout,
+                            contentDescription = null,
+                            tint = MaterialTheme.colorScheme.error.copy(alpha = 0.4f),
+                            modifier = Modifier.size(20.dp),
+                        )
+                    }
                 }
             }
             Spacer(Modifier.height(32.dp))

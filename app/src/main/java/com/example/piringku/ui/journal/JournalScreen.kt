@@ -75,6 +75,7 @@ fun JournalScreen() {
     var showAddSheet by remember { mutableStateOf(false) }
     var selectedEntryId by remember { mutableLongStateOf(-1L) }
     var selectedFood by remember { mutableStateOf<FoodItem?>(null) }
+    var addSheetMealType by remember { mutableStateOf(MealType.BREAKFAST) }
 
     val showEditSheet = selectedEntryId > 0L
     val targetCalories = 2000f
@@ -135,7 +136,10 @@ fun JournalScreen() {
                         entries = mealEntries,
                         isEmpty = mealEntries.isEmpty(),
                         onEntryClick = { id -> selectedEntryId = id },
-                        onAddClick = { showAddSheet = true },
+                        onAddClick = {
+                            addSheetMealType = mealType
+                            showAddSheet = true
+                        },
                     )
                 }
                 item { Spacer(Modifier.height(12.dp)) }
@@ -158,6 +162,7 @@ fun JournalScreen() {
                         showAddSheet = false
                         selectedFood = null
                     },
+                    initialMealType = addSheetMealType,
                 )
             } else {
                 com.example.piringku.ui.search.SearchScreen(

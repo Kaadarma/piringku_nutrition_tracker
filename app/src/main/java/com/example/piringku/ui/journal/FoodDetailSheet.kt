@@ -62,11 +62,12 @@ fun FoodDetailSheet(
     food: FoodItem,
     onDismiss: () -> Unit,
     onAdded: () -> Unit,
+    initialMealType: MealType = MealType.LUNCH,
 ) {
     val context = LocalContext.current
     val repository = remember { JournalRepository.getInstance(context) }
     var portion by remember { mutableFloatStateOf(1f) }
-    var selectedMeal by remember { mutableStateOf(MealType.LUNCH) }
+    var selectedMeal by remember { mutableStateOf(initialMealType) }
     var mealExpanded by remember { mutableStateOf(false) }
 
     val ratio = portion

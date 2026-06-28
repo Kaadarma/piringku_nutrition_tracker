@@ -26,6 +26,7 @@ import androidx.compose.foundation.shape.CircleShape
 import androidx.compose.foundation.shape.RoundedCornerShape
 import androidx.compose.material.icons.Icons
 import androidx.compose.material.icons.automirrored.filled.ArrowBack
+import androidx.compose.material.icons.filled.Delete
 import androidx.compose.material.icons.filled.Search
 import androidx.compose.material.icons.outlined.QrCodeScanner
 import androidx.compose.material.icons.outlined.Restaurant
@@ -33,6 +34,7 @@ import androidx.compose.material3.Icon
 import androidx.compose.material3.IconButton
 import androidx.compose.material3.MaterialTheme
 import androidx.compose.material3.Text
+import androidx.compose.material3.TextButton
 import androidx.compose.material3.TextField
 import androidx.compose.material3.TextFieldDefaults
 import androidx.compose.runtime.Composable
@@ -56,6 +58,7 @@ import androidx.compose.ui.text.style.TextOverflow
 import androidx.compose.ui.unit.dp
 import coil.compose.AsyncImage
 import com.example.piringku.data.FoodRepository
+import com.example.piringku.data.SearchHistoryManager
 import com.example.piringku.model.FoodItem
 import kotlinx.coroutines.Dispatchers
 import kotlinx.coroutines.launch
@@ -71,7 +74,9 @@ fun SearchScreen(
 ) {
     val context = LocalContext.current
     val repository = remember { FoodRepository.getInstance(context) }
+    val historyManager = remember { SearchHistoryManager.getInstance(context) }
     val scope = rememberCoroutineScope()
+    var history by remember { mutableStateOf(historyManager.getHistory()) }
 
     var query by rememberSaveable { mutableStateOf("") }
     var selectedTab by rememberSaveable { mutableIntStateOf(0) }
@@ -163,7 +168,11 @@ fun SearchScreen(
                             items(results) { food ->
                                 SearchResultCard(
                                     food = food,
-                                    onClick = { onFoodSelected(food) },
+                                    onClick = {
+                                        historyManager.addToHistory(food)
+                                        history = historyManager.getHistory()
+                                        onFoodSelected(food)
+                                    },
                                 )
                             }
                         }
@@ -172,7 +181,18 @@ fun SearchScreen(
             }
 
             1 -> {
-                HistoryContent()
+                HistoryContent(
+                    history = history,
+                    onFoodClick = {
+                        historyManager.addToHistory(it)
+                        history = historyManager.getHistory()
+                        onFoodSelected(it)
+                    },
+                    onClearHistory = {
+                        historyManager.clearHistory()
+                        history = emptyList()
+                    },
+                )
             }
 
             2 -> {
@@ -445,17 +465,73 @@ private fun EmptyState() {
 }
 
 @Composable
-private fun HistoryContent() {
-    Box(
-        modifier = Modifier.fillMaxSize(),
-        contentAlignment = Alignment.Center,
-    ) {
-        Text(
-            text = "Riwayat pencarian akan muncul di sini",
-            style = MaterialTheme.typography.bodyLarge,
-            color = MaterialTheme.colorScheme.onSurfaceVariant,
-            textAlign = TextAlign.Center,
-        )
+private fun HistoryContent(
+    history: List<FoodItem>,
+    onFoodClick: (FoodItem) -> Unit,
+    onClearHistory: () -> Unit,
+) {
+    if (history.isEmpty()) {
+        Box(
+            modifier = Modifier.fillMaxSize(),
+            contentAlignment = Alignment.Center,
+        ) {
+            Column(horizontalAlignment = Alignment.CenterHorizontally) {
+                Text(
+                    text = "Belum ada riwayat",
+                    style = MaterialTheme.typography.bodyLarge,
+                    color = MaterialTheme.colorScheme.onSurfaceVariant,
+                    textAlign = TextAlign.Center,
+                )
+                Spacer(Modifier.height(4.dp))
+                Text(
+                    text = "Klik makanan dari hasil pencarian\nuntuk menyimpannya di sini",
+                    style = MaterialTheme.typography.bodySmall,
+                    color = MaterialTheme.colorScheme.onSurfaceVariant.copy(alpha = 0.7f),
+                    textAlign = TextAlign.Center,
+                )
+            }
+        }
+    } else {
+        LazyColumn(
+            contentPadding = PaddingValues(horizontal = 20.dp),
+            verticalArrangement = Arrangement.spacedBy(12.dp),
+        ) {
+            item {
+                Row(
+                    modifier = Modifier.fillMaxWidth(),
+                    horizontalArrangement = Arrangement.SpaceBetween,
+                    verticalAlignment = Alignment.CenterVertically,
+                ) {
+                    Text(
+                        text = "Riwayat Pencarian",
+                        style = MaterialTheme.typography.titleSmall,
+                        fontWeight = FontWeight.SemiBold,
+                        color = MaterialTheme.colorScheme.onSurface,
+                    )
+                    androidx.compose.material3.TextButton(onClick = onClearHistory) {
+                        Icon(
+                            Icons.Default.Delete,
+                            contentDescription = null,
+                            modifier = Modifier.size(16.dp),
+                            tint = MaterialTheme.colorScheme.error,
+                        )
+                        Spacer(Modifier.width(4.dp))
+                        Text(
+                            text = "Hapus",
+                            style = MaterialTheme.typography.labelSmall,
+                            color = MaterialTheme.colorScheme.error,
+                        )
+                    }
+                }
+            }
+            items(history) { food ->
+                SearchResultCard(
+                    food = food,
+                    onClick = { onFoodClick(food) },
+                )
+            }
+            item { Spacer(Modifier.height(80.dp)) }
+        }
     }
 }
 

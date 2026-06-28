@@ -1,64 +1,60 @@
 package com.example.piringku.data
 
 import android.content.Context
+import com.example.piringku.data.local.AppDatabase
+import com.example.piringku.data.local.entity.JournalEntryEntity
 import com.example.piringku.model.DailyNutrition
 import com.example.piringku.model.JournalEntry
 import com.example.piringku.model.MealType
 import kotlinx.coroutines.flow.Flow
-import kotlinx.coroutines.flow.MutableStateFlow
 import kotlinx.coroutines.flow.map
 import java.time.Instant
 import java.time.LocalDate
 import java.time.ZoneOffset
-import java.util.concurrent.atomic.AtomicLong
 
 class JournalRepository private constructor(context: Context) {
-    private val entries = MutableStateFlow<List<JournalEntry>>(emptyList())
-    private val nextId = AtomicLong(1)
+
+    private val journalDao = AppDatabase.getInstance(context).journalDao()
 
     fun getEntriesByDate(date: LocalDate): Flow<List<JournalEntry>> {
-        val start = date.atStartOfDay(ZoneOffset.UTC).toInstant()
-        val end = date.plusDays(1).atStartOfDay(ZoneOffset.UTC).toInstant()
-        return entries.map { list ->
-            list.filter { it.timestamp in start..end }.sortedBy { it.mealType.order }
+        val start = date.atStartOfDay(ZoneOffset.UTC).toInstant().toEpochMilli()
+        val end = date.plusDays(1).atStartOfDay(ZoneOffset.UTC).toInstant().toEpochMilli()
+        return journalDao.getEntriesByDateRange(start, end).map { entities ->
+            entities.map { it.toJournalEntry() }
         }
     }
 
     fun getDailyNutrition(date: LocalDate): Flow<DailyNutrition> {
-        val start = date.atStartOfDay(ZoneOffset.UTC).toInstant()
-        val end = date.plusDays(1).atStartOfDay(ZoneOffset.UTC).toInstant()
-        return entries.map { list ->
-            val dayEntries = list.filter { it.timestamp in start..end }
+        val start = date.atStartOfDay(ZoneOffset.UTC).toInstant().toEpochMilli()
+        val end = date.plusDays(1).atStartOfDay(ZoneOffset.UTC).toInstant().toEpochMilli()
+        return journalDao.getEntriesByDateRange(start, end).map { entities ->
             DailyNutrition(
-                calories = dayEntries.sumOf { it.calories.toDouble() }.toFloat(),
-                protein = dayEntries.sumOf { it.protein.toDouble() }.toFloat(),
-                fat = dayEntries.sumOf { it.fat.toDouble() }.toFloat(),
-                carbs = dayEntries.sumOf { it.carbs.toDouble() }.toFloat(),
+                calories = entities.sumOf { it.calories.toDouble() }.toFloat(),
+                protein = entities.sumOf { it.protein.toDouble() }.toFloat(),
+                fat = entities.sumOf { it.fat.toDouble() }.toFloat(),
+                carbs = entities.sumOf { it.carbs.toDouble() }.toFloat(),
             )
         }
     }
 
     suspend fun addEntry(entry: JournalEntry): Long {
-        val id = nextId.getAndIncrement()
-        val newEntry = entry.copy(id = id)
-        entries.value = entries.value + newEntry
-        return id
+        return journalDao.insertEntry(entry.toEntity())
     }
 
     suspend fun updateEntry(entry: JournalEntry) {
-        entries.value = entries.value.map { if (it.id == entry.id) entry else it }
+        journalDao.updateEntry(entry.toEntity())
     }
 
     suspend fun deleteEntry(entry: JournalEntry) {
-        entries.value = entries.value.filter { it.id != entry.id }
+        journalDao.deleteEntry(entry.toEntity())
     }
 
     suspend fun deleteEntryById(id: Long) {
-        entries.value = entries.value.filter { it.id != id }
+        journalDao.deleteEntryById(id)
     }
 
     suspend fun getEntryById(id: Long): JournalEntry? {
-        return entries.value.find { it.id == id }
+        return journalDao.getEntryById(id)?.toJournalEntry()
     }
 
     fun createEntryFromFood(
@@ -96,4 +92,36 @@ class JournalRepository private constructor(context: Context) {
             }
         }
     }
+}
+
+private fun JournalEntryEntity.toJournalEntry(): JournalEntry {
+    return JournalEntry(
+        id = id,
+        foodId = foodId,
+        foodName = foodName,
+        portion = portion,
+        calories = calories,
+        protein = protein,
+        fat = fat,
+        carbs = carbs,
+        mealType = MealType.fromString(mealType),
+        timestamp = Instant.ofEpochMilli(timestamp),
+        imageUrl = imageUrl,
+    )
+}
+
+private fun JournalEntry.toEntity(): JournalEntryEntity {
+    return JournalEntryEntity(
+        id = id,
+        foodId = foodId,
+        foodName = foodName,
+        portion = portion,
+        calories = calories,
+        protein = protein,
+        fat = fat,
+        carbs = carbs,
+        mealType = mealType.name,
+        timestamp = timestamp.toEpochMilli(),
+        imageUrl = imageUrl,
+    )
 }

@@ -53,7 +53,7 @@ import androidx.compose.ui.text.input.ImeAction
 import androidx.compose.ui.text.input.KeyboardType
 import androidx.compose.ui.unit.dp
 import androidx.compose.ui.unit.sp
-import com.example.piringku.data.UserPreferences
+import com.example.piringku.data.repository.UserRepository
 import com.example.piringku.ui.theme.BorderSubtle
 import kotlinx.coroutines.Dispatchers
 import kotlinx.coroutines.launch
@@ -66,7 +66,7 @@ fun DataDiriScreen(
     onSaved: () -> Unit,
 ) {
     val context = LocalContext.current
-    val prefs = remember { UserPreferences.getInstance(context) }
+    val userRepo = remember { UserRepository.getInstance(context) }
     val scope = rememberCoroutineScope()
     var name by remember { mutableStateOf("") }
     var age by remember { mutableStateOf("") }
@@ -172,7 +172,7 @@ fun DataDiriScreen(
                     onValueChange = { name = it; error = null },
                     placeholder = { Text("Masukkan nama") },
                     modifier = Modifier.fillMaxWidth(),
-                    shape = RoundedCornerShape(12.dp),
+                    shape = RoundedCornerShape(8.dp),
                     singleLine = true,
                     colors = OutlinedTextFieldDefaults.colors(
                         focusedBorderColor = MaterialTheme.colorScheme.primary,
@@ -197,7 +197,7 @@ fun DataDiriScreen(
                         onValueChange = { age = it; error = null },
                         placeholder = { Text("0") },
                         modifier = Modifier.fillMaxWidth(),
-                        shape = RoundedCornerShape(12.dp),
+                        shape = RoundedCornerShape(8.dp),
                         singleLine = true,
                         suffix = { Text("Thn") },
                         keyboardOptions = androidx.compose.foundation.text.KeyboardOptions(
@@ -233,7 +233,7 @@ fun DataDiriScreen(
                             modifier = Modifier
                                 .menuAnchor()
                                 .fillMaxWidth(),
-                            shape = RoundedCornerShape(12.dp),
+                            shape = RoundedCornerShape(8.dp),
                             singleLine = true,
                             colors = OutlinedTextFieldDefaults.colors(
                                 focusedBorderColor = MaterialTheme.colorScheme.primary,
@@ -262,7 +262,7 @@ fun DataDiriScreen(
 
             Card(
                 modifier = Modifier.fillMaxWidth(),
-                shape = RoundedCornerShape(12.dp),
+                shape = RoundedCornerShape(16.dp),
                 colors = CardDefaults.cardColors(
                     containerColor = MaterialTheme.colorScheme.surfaceContainerLow,
                 ),
@@ -295,7 +295,7 @@ fun DataDiriScreen(
                                 onValueChange = { height = it; error = null },
                                 placeholder = { Text("170") },
                                 modifier = Modifier.fillMaxWidth(),
-                                shape = RoundedCornerShape(12.dp),
+                                shape = RoundedCornerShape(8.dp),
                                 singleLine = true,
                                 suffix = { Text("cm") },
                                 keyboardOptions = androidx.compose.foundation.text.KeyboardOptions(
@@ -321,7 +321,7 @@ fun DataDiriScreen(
                                 onValueChange = { weight = it; error = null },
                                 placeholder = { Text("65") },
                                 modifier = Modifier.fillMaxWidth(),
-                                shape = RoundedCornerShape(12.dp),
+                                shape = RoundedCornerShape(8.dp),
                                 singleLine = true,
                                 suffix = { Text("kg") },
                                 keyboardOptions = androidx.compose.foundation.text.KeyboardOptions(
@@ -349,7 +349,7 @@ fun DataDiriScreen(
                             onValueChange = { targetWeight = it; error = null },
                             placeholder = { Text("68") },
                             modifier = Modifier.fillMaxWidth(),
-                            shape = RoundedCornerShape(12.dp),
+                            shape = RoundedCornerShape(8.dp),
                             singleLine = true,
                             suffix = { Text("kg") },
                             keyboardOptions = androidx.compose.foundation.text.KeyboardOptions(
@@ -389,7 +389,7 @@ fun DataDiriScreen(
                         modifier = Modifier
                             .menuAnchor()
                             .fillMaxWidth(),
-                        shape = RoundedCornerShape(12.dp),
+                        shape = RoundedCornerShape(8.dp),
                         singleLine = true,
                         colors = OutlinedTextFieldDefaults.colors(
                             focusedBorderColor = MaterialTheme.colorScheme.primary,
@@ -432,7 +432,8 @@ fun DataDiriScreen(
                         weight.toFloatOrNull() == null -> error = "Berat tidak valid"
                         else -> {
                             scope.launch(Dispatchers.IO) {
-                                prefs.saveDataDiri(
+                                userRepo.saveUser(
+                                    name = name,
                                     height = height.toIntOrNull() ?: 0,
                                     weight = weight.toFloatOrNull() ?: 0f,
                                     age = age.toIntOrNull() ?: 0,
@@ -453,7 +454,7 @@ fun DataDiriScreen(
                 ),
             ) {
                 Text(
-                    text = "Ubah Data Diri",
+                    text = "Simpan Perubahan",
                     style = MaterialTheme.typography.labelLarge,
                 )
             }
