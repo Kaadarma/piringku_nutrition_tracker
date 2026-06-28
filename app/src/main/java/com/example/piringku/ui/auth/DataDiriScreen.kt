@@ -1,5 +1,6 @@
 package com.example.piringku.ui.auth
 
+import android.net.Uri
 import androidx.compose.foundation.background
 import androidx.compose.foundation.border
 import androidx.compose.foundation.clickable
@@ -39,6 +40,7 @@ import androidx.compose.material3.OutlinedTextField
 import androidx.compose.material3.OutlinedTextFieldDefaults
 import androidx.compose.material3.Text
 import androidx.compose.runtime.Composable
+import androidx.compose.runtime.LaunchedEffect
 import androidx.compose.runtime.getValue
 import androidx.compose.runtime.mutableStateOf
 import androidx.compose.runtime.remember
@@ -47,6 +49,7 @@ import androidx.compose.runtime.setValue
 import androidx.compose.ui.Alignment
 import androidx.compose.ui.Modifier
 import androidx.compose.ui.draw.clip
+import androidx.compose.ui.layout.ContentScale
 import androidx.compose.ui.platform.LocalContext
 import androidx.compose.ui.text.font.FontWeight
 import androidx.compose.ui.text.input.ImeAction
@@ -55,9 +58,11 @@ import androidx.compose.ui.unit.dp
 import androidx.compose.ui.unit.sp
 import com.example.piringku.data.repository.UserRepository
 import com.example.piringku.ui.theme.BorderSubtle
+import com.example.piringku.util.ProfilePictureManager
 import kotlinx.coroutines.Dispatchers
 import kotlinx.coroutines.launch
 import kotlinx.coroutines.withContext
+import androidx.compose.runtime.LaunchedEffect
 
 @OptIn(ExperimentalMaterial3Api::class)
 @Composable
@@ -78,6 +83,34 @@ fun DataDiriScreen(
     var targetWeight by remember { mutableStateOf("") }
     var selectedActivity by remember { mutableStateOf("Cukup aktif (3-5 hari/minggu)") }
     var activityExpanded by remember { mutableStateOf(false) }
+    var dataLoaded by remember { mutableStateOf(false) }
+    var hasProfilePicture by remember { mutableStateOf(ProfilePictureManager.exists(context)) }
+    var profilePictureUri by remember { mutableStateOf<Uri?>(ProfilePictureManager.getUri(context)) }
+
+    LaunchedEffect(ProfilePictureManager.photoVersion) {
+        hasProfilePicture = ProfilePictureManager.exists(context)
+        profilePictureUri = ProfilePictureManager.getUri(context)
+    }
+
+    LaunchedEffect(Unit) {
+        val profile = withContext(Dispatchers.IO) { userRepo.getUserSnapshot() }
+        if (profile.name.isNotBlank()) {
+            name = profile.name
+            age = if (profile.age > 0) profile.age.toString() else ""
+            selectedGender = profile.gender
+            height = if (profile.height > 0) profile.height.toString() else ""
+            weight = if (profile.weight > 0) profile.weight.toString() else ""
+            targetWeight = if (profile.targetWeight > 0) profile.targetWeight.toString() else ""
+            selectedActivity = when (profile.activityLevel) {
+                "tidak_aktif" -> "Tidak aktif (Banyak duduk)"
+                "sedikit_aktif" -> "Sedikit aktif (1-2 hari/minggu)"
+                "cukup_aktif" -> "Cukup aktif (3-5 hari/minggu)"
+                "sangat_aktif" -> "Sangat aktif (Setiap hari)"
+                else -> "Cukup aktif (3-5 hari/minggu)"
+            }
+        }
+        dataLoaded = true
+    }
     val activityLevels = listOf(
         "Tidak aktif (Banyak duduk)" to "tidak_aktif",
         "Sedikit aktif (1-2 hari/minggu)" to "sedikit_aktif",
@@ -130,12 +163,23 @@ fun DataDiriScreen(
                             .border(4.dp, MaterialTheme.colorScheme.surfaceContainerLowest, CircleShape),
                         contentAlignment = Alignment.Center,
                     ) {
-                        Icon(
-                            Icons.Default.Person,
-                            contentDescription = null,
-                            modifier = Modifier.size(64.dp),
-                            tint = MaterialTheme.colorScheme.onSurfaceVariant,
-                        )
+                        if (hasProfilePicture && profilePictureUri != null) {
+                            coil.compose.AsyncImage(
+                                model = profilePictureUri,
+                                contentDescription = "Foto Profil",
+                                modifier = Modifier
+                                    .matchParentSize()
+                                    .clip(CircleShape),
+                                contentScale = ContentScale.Crop,
+                            )
+                        } else {
+                            Icon(
+                                Icons.Default.Person,
+                                contentDescription = null,
+                                modifier = Modifier.size(64.dp),
+                                tint = MaterialTheme.colorScheme.onSurfaceVariant,
+                            )
+                        }
                     }
                     Box(
                         modifier = Modifier
@@ -431,14 +475,17 @@ fun DataDiriScreen(
                         height.toFloatOrNull() == null -> error = "Tinggi tidak valid"
                         weight.toFloatOrNull() == null -> error = "Berat tidak valid"
                         else -> {
+                            val activityKey = activityLevels.firstOrNull { it.first == selectedActivity }?.second
+                                ?: "cukup_aktif"
                             scope.launch(Dispatchers.IO) {
                                 userRepo.saveUser(
                                     name = name,
+                                    email = userRepo.getUserSnapshot().email,
                                     height = height.toIntOrNull() ?: 0,
                                     weight = weight.toFloatOrNull() ?: 0f,
                                     age = age.toIntOrNull() ?: 0,
                                     gender = selectedGender,
-                                    activityLevel = selectedActivity,
+                                    activityLevel = activityKey,
                                 )
                                 withContext(Dispatchers.Main) { onSaved() }
                             }

@@ -11,7 +11,7 @@ import com.example.piringku.data.local.entity.UserEntity
 
 @Database(
     entities = [UserEntity::class, JournalEntryEntity::class],
-    version = 1,
+    version = 2,
     exportSchema = false,
 )
 abstract class AppDatabase : RoomDatabase() {

@@ -39,7 +39,9 @@ import androidx.compose.material3.IconButton
 import androidx.compose.material3.MaterialTheme
 import androidx.compose.material3.Text
 import androidx.compose.runtime.Composable
+import androidx.compose.runtime.collectAsState
 import androidx.compose.runtime.getValue
+import androidx.compose.runtime.remember
 import androidx.compose.ui.Alignment
 import androidx.compose.ui.Modifier
 import androidx.compose.ui.geometry.Offset
@@ -50,10 +52,13 @@ import androidx.compose.ui.graphics.StrokeCap
 import androidx.compose.ui.graphics.StrokeJoin
 import androidx.compose.ui.graphics.drawscope.Stroke
 import androidx.compose.ui.graphics.nativeCanvas
+import androidx.compose.ui.platform.LocalContext
 import androidx.compose.ui.text.font.FontWeight
 import androidx.compose.ui.text.style.TextAlign
 import androidx.compose.ui.unit.dp
 import androidx.compose.ui.unit.sp
+import com.example.piringku.data.repository.UserProfile
+import com.example.piringku.data.repository.UserRepository
 import com.example.piringku.ui.theme.BorderSubtle
 import com.example.piringku.ui.theme.DataBlue
 import com.example.piringku.ui.theme.HealthGreen
@@ -61,6 +66,10 @@ import com.example.piringku.ui.theme.SecondaryContainer
 
 @Composable
 fun ProgresGoalsScreen(onBack: () -> Unit) {
+    val context = LocalContext.current
+    val userRepo = remember { UserRepository.getInstance(context) }
+    val profile by userRepo.userProfile.collectAsState(initial = UserProfile())
+
     Column(
         modifier = Modifier
             .fillMaxSize()
@@ -91,8 +100,11 @@ fun ProgresGoalsScreen(onBack: () -> Unit) {
                 .padding(horizontal = 20.dp),
             verticalArrangement = Arrangement.spacedBy(24.dp),
         ) {
-            WeightHeroSection()
-            WeightChartSection()
+            WeightHeroSection(
+                currentWeight = profile.weight,
+                targetWeight = profile.targetWeight,
+            )
+            WeightChartSection(targetWeight = profile.targetWeight)
             NutritionAdherenceSection()
             Spacer(Modifier.height(24.dp))
         }
@@ -100,7 +112,13 @@ fun ProgresGoalsScreen(onBack: () -> Unit) {
 }
 
 @Composable
-private fun WeightHeroSection() {
+private fun WeightHeroSection(
+    currentWeight: Float,
+    targetWeight: Float,
+) {
+    val weightDiff = targetWeight - currentWeight
+    val trendText = if (weightDiff >= 0) "+%.1f Kg".format(weightDiff) else "%.1f Kg".format(weightDiff)
+
     Card(
         modifier = Modifier.fillMaxWidth(),
         shape = RoundedCornerShape(16.dp),
@@ -133,7 +151,7 @@ private fun WeightHeroSection() {
                 )
                 Row(verticalAlignment = Alignment.Bottom) {
                     Text(
-                        text = "75",
+                        text = "%.0f".format(currentWeight),
                         style = MaterialTheme.typography.displayLarge,
                         fontWeight = FontWeight.ExtraBold,
                         color = MaterialTheme.colorScheme.primary,
@@ -162,7 +180,7 @@ private fun WeightHeroSection() {
                         )
                         Spacer(Modifier.width(4.dp))
                         Text(
-                            text = "-1.2 Kg",
+                            text = trendText,
                             style = MaterialTheme.typography.labelSmall,
                             fontWeight = FontWeight.Bold,
                             color = MaterialTheme.colorScheme.onPrimaryContainer,
@@ -184,13 +202,13 @@ private fun WeightHeroSection() {
                         color = MaterialTheme.colorScheme.onSurfaceVariant,
                     )
                     Text(
-                        text = "68 Kg",
+                        text = "%.0f Kg".format(targetWeight),
                         style = MaterialTheme.typography.bodyMedium,
                         fontWeight = FontWeight.Bold,
                         color = MaterialTheme.colorScheme.onSurface,
                     )
                     Text(
-                        text = " (Kekurangan 7 Kg lagi)",
+                        text = " (Kekurangan %.0f Kg lagi)".format(kotlin.math.abs(weightDiff)),
                         style = MaterialTheme.typography.bodyMedium,
                         color = MaterialTheme.colorScheme.onSurfaceVariant,
                     )
@@ -214,7 +232,7 @@ private fun WeightHeroSection() {
 }
 
 @Composable
-private fun WeightChartSection() {
+private fun WeightChartSection(targetWeight: Float = 68f) {
     Card(
         modifier = Modifier.fillMaxWidth(),
         shape = RoundedCornerShape(16.dp),
@@ -288,7 +306,8 @@ private fun WeightChartSection() {
                     drawLine(lineColor, Offset(pad, y), Offset(w - pad, y), strokeWidth = 1f)
                 }
 
-                val targetY = pad + chartH * (140f - 100f) / 140f
+                val targetChartValue = targetWeight.coerceIn(40f, 140f)
+                val targetY = pad + chartH * (maxVal - targetChartValue) / maxVal
                 val dashPath = Path().apply {
                     moveTo(pad, targetY)
                     lineTo(w - pad, targetY)
@@ -299,7 +318,7 @@ private fun WeightChartSection() {
                     style = Stroke(width = 1.5f, pathEffect = androidx.compose.ui.graphics.PathEffect.dashPathEffect(floatArrayOf(8f, 4f))),
                 )
                 drawContext.canvas.nativeCanvas.drawText(
-                    "TARGET 68",
+                    "TARGET %.0f".format(targetWeight),
                     w - pad - 68f,
                     targetY - 6f,
                     android.graphics.Paint().apply {

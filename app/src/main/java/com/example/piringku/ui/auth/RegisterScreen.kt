@@ -52,6 +52,7 @@ import androidx.compose.ui.text.style.TextAlign
 import androidx.compose.ui.unit.dp
 import androidx.compose.ui.unit.sp
 import com.example.piringku.data.UserPreferences
+import com.example.piringku.data.repository.UserRepository
 import kotlinx.coroutines.Dispatchers
 import kotlinx.coroutines.launch
 import kotlinx.coroutines.withContext
@@ -63,6 +64,7 @@ fun RegisterScreen(
 ) {
     val context = LocalContext.current
     val prefs = remember { UserPreferences.getInstance(context) }
+    val userRepo = remember { UserRepository.getInstance(context) }
     val scope = rememberCoroutineScope()
     var name by remember { mutableStateOf("") }
     var email by remember { mutableStateOf("") }
@@ -273,7 +275,8 @@ fun RegisterScreen(
                         }
                         else -> {
                             scope.launch(Dispatchers.IO) {
-                                prefs.login(name, email)
+                                userRepo.register(name.trim(), email.trim(), password)
+                                prefs.login(name.trim(), email.trim())
                                 withContext(Dispatchers.Main) {
                                     onRegistered()
                                 }

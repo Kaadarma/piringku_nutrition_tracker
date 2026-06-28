@@ -48,8 +48,10 @@ import androidx.compose.ui.text.style.TextAlign
 import androidx.compose.ui.unit.dp
 import androidx.compose.ui.unit.sp
 import com.example.piringku.data.UserPreferences
+import com.example.piringku.data.repository.UserRepository
 import kotlinx.coroutines.Dispatchers
 import kotlinx.coroutines.launch
+import kotlinx.coroutines.withContext
 
 @Composable
 fun LoginScreen(
@@ -58,6 +60,7 @@ fun LoginScreen(
 ) {
     val context = LocalContext.current
     val prefs = remember { UserPreferences.getInstance(context) }
+    val userRepo = remember { UserRepository.getInstance(context) }
     val scope = rememberCoroutineScope()
     var email by remember { mutableStateOf("") }
     var password by remember { mutableStateOf("") }
@@ -242,9 +245,15 @@ fun LoginScreen(
                         return@Button
                     }
                     scope.launch(Dispatchers.IO) {
-                        prefs.login(email.substringBefore("@"), email)
+                        val valid = userRepo.login(email.trim(), password)
+                        if (valid) {
+                            val name = email.substringBefore("@")
+                            prefs.login(name, email.trim())
+                            withContext(Dispatchers.Main) { onLoginSuccess() }
+                        } else {
+                            withContext(Dispatchers.Main) { error = "Email atau password salah" }
+                        }
                     }
-                    onLoginSuccess()
                 },
                 modifier = Modifier
                     .fillMaxWidth()

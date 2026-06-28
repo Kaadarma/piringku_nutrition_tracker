@@ -64,7 +64,7 @@ import kotlinx.coroutines.Dispatchers
 import kotlinx.coroutines.launch
 import kotlinx.coroutines.withContext
 
-private val tabs = listOf("Pencarian API", "Riwayat Saya", "Barcode Scanner")
+private val tabs = listOf("Pencarian", "Riwayat Saya", "Barcode Scanner")
 
 @Composable
 fun SearchScreen(
@@ -145,7 +145,14 @@ fun SearchScreen(
                     }
 
                     query.isBlank() -> {
-                        EmptyState()
+                        RecommendationsSection(
+                            foods = repository.getRecommendations(),
+                            onFoodClick = {
+                                historyManager.addToHistory(it)
+                                history = historyManager.getHistory()
+                                onFoodSelected(it)
+                            },
+                        )
                     }
 
                     results.isEmpty() -> {
@@ -275,28 +282,32 @@ private fun SearchTabs(
         modifier = Modifier
             .fillMaxWidth()
             .padding(horizontal = 20.dp),
+        horizontalArrangement = Arrangement.spacedBy(8.dp),
     ) {
         tabs.forEachIndexed { index, title ->
             val isSelected = index == selectedTab
             Box(
                 modifier = Modifier
+                    .weight(1f)
                     .clip(RoundedCornerShape(24.dp))
                     .background(
                         if (isSelected) MaterialTheme.colorScheme.primaryContainer
                         else Color.Transparent,
                     )
                     .clickable { onTabSelected(index) }
-                    .padding(horizontal = 16.dp, vertical = 8.dp),
+                    .padding(horizontal = 8.dp, vertical = 8.dp),
+                contentAlignment = Alignment.Center,
             ) {
                 Text(
                     text = title,
                     style = MaterialTheme.typography.labelLarge,
                     fontWeight = FontWeight.SemiBold,
+                    maxLines = 1,
+                    overflow = TextOverflow.Ellipsis,
                     color = if (isSelected) MaterialTheme.colorScheme.onPrimaryContainer
                     else MaterialTheme.colorScheme.onSurfaceVariant,
                 )
             }
-            Spacer(modifier = Modifier.width(8.dp))
         }
     }
 }
@@ -437,6 +448,100 @@ private fun SkeletonShimmer() {
                 .height(20.dp)
                 .clip(RoundedCornerShape(4.dp))
                 .background(MaterialTheme.colorScheme.surfaceContainerHigh),
+        )
+    }
+}
+
+@Composable
+private fun RecommendationsSection(
+    foods: List<FoodItem>,
+    onFoodClick: (FoodItem) -> Unit,
+) {
+    if (foods.isEmpty()) return
+
+    Column(modifier = Modifier.padding(horizontal = 20.dp)) {
+        Text(
+            text = "Rekomendasi Makanan",
+            style = MaterialTheme.typography.titleSmall,
+            fontWeight = FontWeight.SemiBold,
+            color = MaterialTheme.colorScheme.onSurface,
+        )
+        Spacer(modifier = Modifier.height(12.dp))
+
+        foods.chunked(2).forEach { rowItems ->
+            Row(
+                modifier = Modifier.fillMaxWidth(),
+                horizontalArrangement = Arrangement.spacedBy(12.dp),
+            ) {
+                rowItems.forEach { food ->
+                    Box(modifier = Modifier.weight(1f)) {
+                        RecommendationCard(food = food, onClick = { onFoodClick(food) })
+                    }
+                }
+                if (rowItems.size == 1) {
+                    Spacer(modifier = Modifier.weight(1f))
+                }
+            }
+            Spacer(modifier = Modifier.height(12.dp))
+        }
+    }
+}
+
+@Composable
+private fun RecommendationCard(
+    food: FoodItem,
+    onClick: () -> Unit,
+) {
+    Column(
+        modifier = Modifier
+            .fillMaxWidth()
+            .clip(RoundedCornerShape(12.dp))
+            .background(MaterialTheme.colorScheme.surfaceContainerLowest)
+            .clickable(onClick = onClick)
+            .padding(12.dp),
+    ) {
+        if (food.image.isNullOrBlank()) {
+            Box(
+                modifier = Modifier
+                    .fillMaxWidth()
+                    .height(80.dp)
+                    .clip(RoundedCornerShape(8.dp))
+                    .background(MaterialTheme.colorScheme.surfaceVariant),
+                contentAlignment = Alignment.Center,
+            ) {
+                Icon(
+                    Icons.Outlined.Restaurant,
+                    contentDescription = null,
+                    tint = MaterialTheme.colorScheme.onSurfaceVariant,
+                    modifier = Modifier.size(28.dp),
+                )
+            }
+        } else {
+            AsyncImage(
+                model = food.image,
+                contentDescription = food.name,
+                modifier = Modifier
+                    .fillMaxWidth()
+                    .height(80.dp)
+                    .clip(RoundedCornerShape(8.dp)),
+                contentScale = ContentScale.Crop,
+            )
+        }
+        Spacer(modifier = Modifier.height(8.dp))
+        Text(
+            text = food.name,
+            style = MaterialTheme.typography.bodySmall,
+            fontWeight = FontWeight.SemiBold,
+            color = MaterialTheme.colorScheme.onSurface,
+            maxLines = 2,
+            overflow = TextOverflow.Ellipsis,
+        )
+        Spacer(modifier = Modifier.height(2.dp))
+        Text(
+            text = "${food.calories} kcal",
+            style = MaterialTheme.typography.labelSmall,
+            fontWeight = FontWeight.Medium,
+            color = MaterialTheme.colorScheme.primary,
         )
     }
 }

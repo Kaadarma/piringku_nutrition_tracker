@@ -30,14 +30,19 @@ import com.example.piringku.ui.barcode.BarcodeScanner
 import com.example.piringku.ui.journal.JournalScreen
 import com.example.piringku.ui.profile.ProfilScreen
 import com.example.piringku.ui.search.SearchScreen
+import com.example.piringku.ui.settings.ReminderSettingsScreen
 import com.example.piringku.ui.splash.SplashScreen
 import com.example.piringku.ui.stats.ProgresGoalsScreen
 import com.example.piringku.ui.stats.StatsScreen
 import com.example.piringku.ui.theme.PIRINGKUTheme
+import com.example.piringku.util.MealReminderScheduler
+import com.example.piringku.util.NotificationHelper
 
 class MainActivity : ComponentActivity() {
     override fun onCreate(savedInstanceState: Bundle?) {
         super.onCreate(savedInstanceState)
+        NotificationHelper.createChannel(this)
+        MealReminderScheduler.scheduleAll(this)
         setContent {
             PIRINGKUTheme() {
                 PiringkuApp()
@@ -58,11 +63,12 @@ sealed class Screen(val route: String, val title: String = "", val icon: ImageVe
     object Barcode : Screen("barcode")
     object ProgresGoals : Screen("progres_goals")
     object EditDataDiri : Screen("edit_data_diri")
+    object ReminderSettings : Screen("reminder_settings")
 }
 
 private val bottomNavItems = listOf(Screen.Journal, Screen.Stats, Screen.Cari, Screen.Profile)
 private val authRoutes = setOf(Screen.Splash.route, Screen.Login.route, Screen.Register.route, Screen.DataDiri.route)
-private val fullscreenRoutes = setOf(Screen.Barcode.route, Screen.ProgresGoals.route, Screen.EditDataDiri.route)
+private val fullscreenRoutes = setOf(Screen.Barcode.route, Screen.ProgresGoals.route, Screen.EditDataDiri.route, Screen.ReminderSettings.route)
 
 @Composable
 fun PiringkuApp() {
@@ -113,13 +119,13 @@ fun PiringkuApp() {
             composable(Screen.Login.route) {
                 LoginScreen(
                     onNavigateToRegister = { navController.navigate(Screen.Register.route) },
-                    onLoginSuccess = { navController.navigate(Screen.Journal.route) { popUpTo(Screen.Login.route) { inclusive = true } } },
+                    onLoginSuccess = { navController.navigate(Screen.DataDiri.route) { popUpTo(Screen.Login.route) { inclusive = true } } },
                 )
             }
             composable(Screen.Register.route) {
                 RegisterScreen(
                     onNavigateToLogin = { navController.popBackStack() },
-                    onRegistered = { navController.navigate(Screen.DataDiri.route) { popUpTo(Screen.Register.route) { inclusive = true } } },
+                    onRegistered = { navController.navigate(Screen.Login.route) { popUpTo(Screen.Register.route) { inclusive = true } } },
                 )
             }
             composable(Screen.DataDiri.route) {
@@ -140,6 +146,7 @@ fun PiringkuApp() {
                 ProfilScreen(
                     onEditDataDiri = { navController.navigate(Screen.EditDataDiri.route) },
                     onProgresGoals = { navController.navigate(Screen.ProgresGoals.route) },
+                    onReminderSettings = { navController.navigate(Screen.ReminderSettings.route) },
                     onLogout = {
                         navController.navigate(Screen.Login.route) {
                             popUpTo(0) { inclusive = true }
@@ -165,6 +172,12 @@ fun PiringkuApp() {
                     onSaved = { navController.popBackStack() },
                 )
             }
+            composable(Screen.ReminderSettings.route) {
+                ReminderSettingsScreen(
+                    onBack = { navController.popBackStack() },
+                )
+            }
         }
     }
+
 }

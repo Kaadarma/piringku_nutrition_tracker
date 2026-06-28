@@ -44,6 +44,10 @@ class FoodRepository private constructor(context: Context) {
         return foodCache?.find { it.id == id }
     }
 
+    fun getRecommendations(count: Int = 8): List<FoodItem> {
+        return foodCache?.take(count) ?: emptyList()
+    }
+
     companion object {
         @Volatile
         private var INSTANCE: FoodRepository? = null

@@ -18,6 +18,7 @@ import androidx.compose.foundation.shape.CircleShape
 import androidx.compose.foundation.shape.RoundedCornerShape
 import androidx.compose.foundation.verticalScroll
 import androidx.compose.material.icons.Icons
+import androidx.compose.material.icons.automirrored.filled.ArrowBack
 import androidx.compose.material.icons.filled.Add
 import androidx.compose.material.icons.filled.KeyboardArrowDown
 import androidx.compose.material.icons.filled.Close
@@ -62,6 +63,7 @@ fun FoodDetailSheet(
     food: FoodItem,
     onDismiss: () -> Unit,
     onAdded: () -> Unit,
+    onBack: () -> Unit = {},
     initialMealType: MealType = MealType.LUNCH,
 ) {
     val context = LocalContext.current
@@ -83,11 +85,21 @@ fun FoodDetailSheet(
             .padding(horizontal = 20.dp)
             .verticalScroll(rememberScrollState()),
     ) {
-        Text(
-            text = "Detail & Input Porsi",
-            style = MaterialTheme.typography.labelSmall,
-            color = MaterialTheme.colorScheme.onSurfaceVariant,
-        )
+        Row(verticalAlignment = Alignment.CenterVertically) {
+            Icon(
+                Icons.AutoMirrored.Filled.ArrowBack,
+                contentDescription = "Kembali ke pencarian",
+                tint = MaterialTheme.colorScheme.onSurfaceVariant,
+                modifier = Modifier
+                    .clickable(onClick = onBack)
+                    .padding(end = 8.dp),
+            )
+            Text(
+                text = "Detail & Input Porsi",
+                style = MaterialTheme.typography.labelSmall,
+                color = MaterialTheme.colorScheme.onSurfaceVariant,
+            )
+        }
 
         Spacer(Modifier.height(16.dp))
 

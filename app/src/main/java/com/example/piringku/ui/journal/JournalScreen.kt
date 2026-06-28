@@ -20,8 +20,16 @@ import androidx.compose.foundation.shape.RoundedCornerShape
 import androidx.compose.material.icons.Icons
 import androidx.compose.material.icons.filled.Add
 import androidx.compose.material.icons.filled.DateRange
+import androidx.compose.material.icons.filled.Edit
 import androidx.compose.material.icons.filled.KeyboardArrowDown
+import androidx.compose.material.icons.filled.Refresh
+import androidx.compose.material.icons.automirrored.filled.KeyboardArrowLeft
+import androidx.compose.material.icons.automirrored.filled.KeyboardArrowRight
+import androidx.compose.material3.Card
+import androidx.compose.material3.CardDefaults
 import androidx.compose.material3.CircularProgressIndicator
+import androidx.compose.material3.DatePicker
+import androidx.compose.material3.DatePickerDialog
 import androidx.compose.material3.ExperimentalMaterial3Api
 import androidx.compose.material3.FloatingActionButton
 import androidx.compose.material3.Icon
@@ -29,6 +37,8 @@ import androidx.compose.material3.MaterialTheme
 import androidx.compose.material3.ModalBottomSheet
 import androidx.compose.material3.Scaffold
 import androidx.compose.material3.Text
+import androidx.compose.material3.TextButton
+import androidx.compose.material3.rememberDatePickerState
 import androidx.compose.material3.rememberModalBottomSheetState
 import androidx.compose.runtime.Composable
 import androidx.compose.runtime.collectAsState
@@ -45,8 +55,10 @@ import androidx.compose.ui.graphics.Color
 import androidx.compose.ui.platform.LocalContext
 import androidx.compose.ui.text.font.FontWeight
 import androidx.compose.ui.unit.dp
+import androidx.compose.ui.window.Dialog
 import com.example.piringku.data.FoodRepository
 import com.example.piringku.data.JournalRepository
+import com.example.piringku.data.TargetPreferences
 import com.example.piringku.model.FoodItem
 import com.example.piringku.model.MealType
 import com.example.piringku.ui.theme.BorderSubtle
@@ -69,22 +81,30 @@ fun JournalScreen() {
     val editSheetState = rememberModalBottomSheetState(skipPartiallyExpanded = true)
 
     val today = LocalDate.now()
-    val entries by repository.getEntriesByDate(today).collectAsState(initial = emptyList())
-    val nutrition by repository.getDailyNutrition(today).collectAsState(initial = com.example.piringku.model.DailyNutrition())
+    var selectedDate by remember { mutableStateOf(today) }
+    var showDatePicker by remember { mutableStateOf(false) }
+    val datePickerState = rememberDatePickerState()
+
+    val entries by repository.getEntriesByDate(selectedDate).collectAsState(initial = emptyList())
+    val nutrition by repository.getDailyNutrition(selectedDate).collectAsState(initial = com.example.piringku.model.DailyNutrition())
 
     var showAddSheet by remember { mutableStateOf(false) }
     var selectedEntryId by remember { mutableLongStateOf(-1L) }
     var selectedFood by remember { mutableStateOf<FoodItem?>(null) }
     var addSheetMealType by remember { mutableStateOf(MealType.BREAKFAST) }
 
+    val targetPrefs = remember { TargetPreferences.getInstance(context) }
+    var targets by remember { mutableStateOf(targetPrefs.getTargets()) }
+    var showTargetSheet by remember { mutableStateOf(false) }
+
     val showEditSheet = selectedEntryId > 0L
-    val targetCalories = 2000f
-    val targetProtein = 150f
-    val targetFat = 65f
-    val targetCarbs = 250f
+    val targetCalories = targets.calories
+    val targetProtein = targets.protein
+    val targetFat = targets.fat
+    val targetCarbs = targets.carbs
 
     val remainingCalories = (targetCalories - nutrition.calories).coerceAtLeast(0f)
-    val calorieProgress = (nutrition.calories / targetCalories).coerceAtMost(1f)
+    val calorieProgress = if (targetCalories > 0f) (nutrition.calories / targetCalories).coerceAtMost(1f) else 0f
 
     val entryToEdit = if (showEditSheet) {
         entries.find { it.id == selectedEntryId }
@@ -109,7 +129,16 @@ fun JournalScreen() {
                 .padding(padding),
         ) {
             item { AppHeader() }
-            item { DateTargetHeader(today = today, targetCalories = targetCalories.toInt()) }
+            item {
+                DateTargetHeader(
+                    selectedDate = selectedDate,
+                    targetCalories = targetCalories.toInt(),
+                    onPreviousDay = { selectedDate = selectedDate.minusDays(1) },
+                    onNextDay = { selectedDate = selectedDate.plusDays(1) },
+                    onDateClick = { showDatePicker = true },
+                    onTargetClick = { showTargetSheet = true },
+                )
+            }
             item {
                 HeroSection(
                     remainingCalories = remainingCalories.toInt(),
@@ -151,17 +180,18 @@ fun JournalScreen() {
 
     if (showAddSheet) {
         ModalBottomSheet(
-            onDismissRequest = { showAddSheet = false },
+            onDismissRequest = { showAddSheet = false; selectedFood = null },
             sheetState = addSheetState,
         ) {
             if (selectedFood != null) {
                 FoodDetailSheet(
                     food = selectedFood!!,
-                    onDismiss = { showAddSheet = false },
+                    onDismiss = { showAddSheet = false; selectedFood = null },
                     onAdded = {
                         showAddSheet = false
                         selectedFood = null
                     },
+                    onBack = { selectedFood = null },
                     initialMealType = addSheetMealType,
                 )
             } else {
@@ -172,6 +202,39 @@ fun JournalScreen() {
                 )
             }
         }
+    }
+
+    if (showDatePicker) {
+        DatePickerDialog(
+            onDismissRequest = { showDatePicker = false },
+            confirmButton = {
+                TextButton(onClick = {
+                    datePickerState.selectedDateMillis?.let { millis ->
+                        selectedDate = java.time.Instant.ofEpochMilli(millis)
+                            .atZone(java.time.ZoneOffset.UTC)
+                            .toLocalDate()
+                    }
+                    showDatePicker = false
+                }) { Text("Pilih") }
+            },
+            dismissButton = {
+                TextButton(onClick = { showDatePicker = false }) { Text("Batal") }
+            },
+        ) {
+            DatePicker(state = datePickerState)
+        }
+    }
+
+    if (showTargetSheet) {
+        TargetEditSheet(
+            targets = targets,
+            onDismiss = { showTargetSheet = false },
+            onSave = { newTargets ->
+                targets = newTargets
+                targetPrefs.saveTargets(newTargets)
+                showTargetSheet = false
+            },
+        )
     }
 
     if (showEditSheet && entryToEdit != null) {
@@ -187,6 +250,153 @@ fun JournalScreen() {
             )
         }
     }
+}
+
+@Composable
+private fun TargetEditSheet(
+    targets: com.example.piringku.data.DailyTargets,
+    onDismiss: () -> Unit,
+    onSave: (com.example.piringku.data.DailyTargets) -> Unit,
+) {
+    val defaultTargets = com.example.piringku.data.DailyTargets()
+    var caloriesText by remember { mutableStateOf(targets.calories.toInt().toString()) }
+    var proteinText by remember { mutableStateOf(targets.protein.toInt().toString()) }
+    var fatText by remember { mutableStateOf(targets.fat.toInt().toString()) }
+    var carbsText by remember { mutableStateOf(targets.carbs.toInt().toString()) }
+
+    Dialog(
+        onDismissRequest = onDismiss,
+    ) {
+        Card(
+            modifier = Modifier.fillMaxWidth(),
+            shape = RoundedCornerShape(20.dp),
+            colors = CardDefaults.cardColors(containerColor = MaterialTheme.colorScheme.surface),
+            elevation = CardDefaults.cardElevation(8.dp),
+        ) {
+            Column(
+                modifier = Modifier
+                    .fillMaxWidth()
+                    .padding(24.dp),
+            ) {
+                Text(
+                    text = "Target Harian",
+                    style = MaterialTheme.typography.titleMedium,
+                    fontWeight = FontWeight.Bold,
+                )
+                Spacer(Modifier.height(4.dp))
+                Text(
+                    text = "Sesuaikan target nutrisi harianmu",
+                    style = MaterialTheme.typography.bodySmall,
+                    color = MaterialTheme.colorScheme.onSurfaceVariant,
+                )
+                Spacer(Modifier.height(20.dp))
+
+                Row(
+                    modifier = Modifier.fillMaxWidth(),
+                    horizontalArrangement = Arrangement.spacedBy(12.dp),
+                ) {
+                    Column(modifier = Modifier.weight(1f)) {
+                        TargetField(label = "Kalori", suffix = "kkal", value = caloriesText) {
+                            caloriesText = it.filter { c -> c.isDigit() }.take(4)
+                        }
+                    }
+                    Column(modifier = Modifier.weight(1f)) {
+                        TargetField(label = "Protein", suffix = "g", value = proteinText) {
+                            proteinText = it.filter { c -> c.isDigit() }.take(3)
+                        }
+                    }
+                }
+                Spacer(Modifier.height(12.dp))
+
+                Row(
+                    modifier = Modifier.fillMaxWidth(),
+                    horizontalArrangement = Arrangement.spacedBy(12.dp),
+                ) {
+                    Column(modifier = Modifier.weight(1f)) {
+                        TargetField(label = "Lemak", suffix = "g", value = fatText) {
+                            fatText = it.filter { c -> c.isDigit() }.take(3)
+                        }
+                    }
+                    Column(modifier = Modifier.weight(1f)) {
+                        TargetField(label = "Karbo", suffix = "g", value = carbsText) {
+                            carbsText = it.filter { c -> c.isDigit() }.take(4)
+                        }
+                    }
+                }
+
+                Spacer(Modifier.height(8.dp))
+
+                TextButton(
+                    onClick = {
+                        caloriesText = defaultTargets.calories.toInt().toString()
+                        proteinText = defaultTargets.protein.toInt().toString()
+                        fatText = defaultTargets.fat.toInt().toString()
+                        carbsText = defaultTargets.carbs.toInt().toString()
+                    },
+                    modifier = Modifier.align(Alignment.CenterHorizontally),
+                ) {
+                    Icon(
+                        Icons.Default.Refresh,
+                        contentDescription = null,
+                        modifier = Modifier.size(16.dp),
+                    )
+                    Spacer(Modifier.width(4.dp))
+                    Text("Rekomendasi")
+                }
+
+                Spacer(Modifier.height(12.dp))
+
+                androidx.compose.material3.Button(
+                    onClick = {
+                        val cals = caloriesText.toFloatOrNull() ?: return@Button
+                        val prot = proteinText.toFloatOrNull() ?: return@Button
+                        val ft = fatText.toFloatOrNull() ?: return@Button
+                        val crb = carbsText.toFloatOrNull() ?: return@Button
+                        onSave(com.example.piringku.data.DailyTargets(cals, prot, ft, crb))
+                    },
+                    modifier = Modifier
+                        .fillMaxWidth()
+                        .height(48.dp),
+                    shape = RoundedCornerShape(12.dp),
+                    colors = androidx.compose.material3.ButtonDefaults.buttonColors(
+                        containerColor = MaterialTheme.colorScheme.primary,
+                    ),
+                ) {
+                    Text("Simpan", style = MaterialTheme.typography.labelLarge)
+                }
+            }
+        }
+    }
+}
+
+@Composable
+private fun TargetField(
+    label: String,
+    suffix: String,
+    value: String,
+    onValueChange: (String) -> Unit,
+) {
+    Text(
+        text = label,
+        style = MaterialTheme.typography.labelSmall,
+        color = MaterialTheme.colorScheme.onSurfaceVariant,
+        modifier = Modifier.padding(start = 4.dp, bottom = 6.dp),
+    )
+    androidx.compose.material3.OutlinedTextField(
+        value = value,
+        onValueChange = onValueChange,
+        modifier = Modifier.fillMaxWidth(),
+        shape = RoundedCornerShape(8.dp),
+        singleLine = true,
+        suffix = { Text(suffix, style = MaterialTheme.typography.bodySmall) },
+        keyboardOptions = androidx.compose.foundation.text.KeyboardOptions(
+            keyboardType = androidx.compose.ui.text.input.KeyboardType.Number,
+        ),
+        colors = androidx.compose.material3.OutlinedTextFieldDefaults.colors(
+            focusedBorderColor = MaterialTheme.colorScheme.primary,
+            unfocusedBorderColor = MaterialTheme.colorScheme.outlineVariant,
+        ),
+    )
 }
 
 @Composable
@@ -209,10 +419,20 @@ private fun AppHeader() {
 
 @Composable
 private fun DateTargetHeader(
-    today: LocalDate,
+    selectedDate: LocalDate,
     targetCalories: Int,
+    onPreviousDay: () -> Unit,
+    onNextDay: () -> Unit,
+    onDateClick: () -> Unit,
+    onTargetClick: () -> Unit,
 ) {
-    val formatter = DateTimeFormatter.ofPattern("'Hari Ini, 'd MMM", Locale.forLanguageTag("id"))
+    val today = LocalDate.now()
+    val formatter = if (selectedDate == today) {
+        DateTimeFormatter.ofPattern("'Hari Ini, 'd MMM", Locale.forLanguageTag("id"))
+    } else {
+        DateTimeFormatter.ofPattern("d MMMM yyyy", Locale.forLanguageTag("id"))
+    }
+
     Row(
         modifier = Modifier
             .fillMaxWidth()
@@ -220,19 +440,42 @@ private fun DateTargetHeader(
             .padding(horizontal = 20.dp, vertical = 12.dp),
         verticalAlignment = Alignment.CenterVertically,
     ) {
-        Row(verticalAlignment = Alignment.CenterVertically) {
+        Row(
+            verticalAlignment = Alignment.CenterVertically,
+            modifier = Modifier.clickable { onDateClick() },
+        ) {
             Icon(
                 imageVector = Icons.Default.DateRange,
                 contentDescription = null,
                 tint = MaterialTheme.colorScheme.onSurfaceVariant,
                 modifier = Modifier.size(20.dp),
             )
-            Spacer(Modifier.width(8.dp))
+            Spacer(Modifier.width(4.dp))
+
+            Icon(
+                imageVector = Icons.AutoMirrored.Filled.KeyboardArrowLeft,
+                contentDescription = "Hari sebelumnya",
+                tint = MaterialTheme.colorScheme.onSurfaceVariant,
+                modifier = Modifier
+                    .size(24.dp)
+                    .clickable { onPreviousDay() },
+            )
+
             Text(
-                text = today.format(formatter),
+                text = selectedDate.format(formatter),
                 style = MaterialTheme.typography.labelLarge,
                 color = MaterialTheme.colorScheme.onSurface,
             )
+
+            Icon(
+                imageVector = Icons.AutoMirrored.Filled.KeyboardArrowRight,
+                contentDescription = "Hari berikutnya",
+                tint = MaterialTheme.colorScheme.onSurfaceVariant,
+                modifier = Modifier
+                    .size(24.dp)
+                    .clickable { onNextDay() },
+            )
+
             Icon(
                 imageVector = Icons.Default.KeyboardArrowDown,
                 contentDescription = null,
@@ -241,12 +484,24 @@ private fun DateTargetHeader(
             )
         }
         Spacer(Modifier.weight(1f))
-        Column(horizontalAlignment = Alignment.End) {
-            Text(
-                text = "TARGET",
-                style = MaterialTheme.typography.labelSmall,
-                color = MaterialTheme.colorScheme.onSurfaceVariant,
-            )
+        Column(
+            horizontalAlignment = Alignment.End,
+            modifier = Modifier.clickable { onTargetClick() },
+        ) {
+            Row(verticalAlignment = Alignment.CenterVertically) {
+                Text(
+                    text = "TARGET",
+                    style = MaterialTheme.typography.labelSmall,
+                    color = MaterialTheme.colorScheme.onSurfaceVariant,
+                )
+                Spacer(Modifier.width(4.dp))
+                Icon(
+                    Icons.Default.Edit,
+                    contentDescription = "Ubah target",
+                    tint = MaterialTheme.colorScheme.onSurfaceVariant,
+                    modifier = Modifier.size(14.dp),
+                )
+            }
             Text(
                 text = "$targetCalories kkal",
                 style = MaterialTheme.typography.labelLarge,

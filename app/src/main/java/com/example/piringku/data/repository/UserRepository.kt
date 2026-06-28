@@ -9,6 +9,7 @@ import kotlinx.coroutines.flow.map
 data class UserProfile(
     val name: String = "",
     val email: String = "",
+    val password: String = "",
     val height: Int = 170,
     val weight: Float = 65f,
     val age: Int = 25,
@@ -44,9 +45,39 @@ class UserRepository(context: Context) {
         } ?: UserProfile()
     }
 
+    suspend fun getUserSnapshot(): UserProfile {
+        val entity = userDao.getUserOnce()
+        return entity?.let {
+            UserProfile(
+                name = it.name,
+                email = it.email,
+                height = it.height,
+                weight = it.weight,
+                age = it.age,
+                gender = it.gender,
+                activityLevel = it.activityLevel,
+                targetWeight = it.targetWeight,
+                goalCalories = it.goalCalories,
+                goalProtein = it.goalProtein,
+                goalFat = it.goalFat,
+                goalCarbs = it.goalCarbs,
+            )
+        } ?: UserProfile()
+    }
+
+    suspend fun register(name: String, email: String, password: String) {
+        userDao.insertUser(UserEntity(name = name, email = email, password = password))
+    }
+
+    suspend fun login(email: String, password: String): Boolean {
+        val user = userDao.getUserByEmail(email)
+        return user != null && user.password == password
+    }
+
     suspend fun saveUser(
         name: String = "",
         email: String = "",
+        password: String = "",
         height: Int = 170,
         weight: Float = 65f,
         age: Int = 25,
@@ -63,6 +94,7 @@ class UserRepository(context: Context) {
             (existing ?: UserEntity()).copy(
                 name = name,
                 email = email,
+                password = password.ifEmpty { existing?.password ?: "" },
                 height = height,
                 weight = weight,
                 age = age,
