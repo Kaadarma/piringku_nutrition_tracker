@@ -8,15 +8,19 @@ import com.example.piringku.data.local.dao.JournalDao
 import com.example.piringku.data.local.dao.UserDao
 import com.example.piringku.data.local.entity.JournalEntryEntity
 import com.example.piringku.data.local.entity.UserEntity
+import com.example.piringku.data.local.dao.FoodDao
+import com.example.piringku.data.local.entity.FoodEntity
 
 @Database(
-    entities = [UserEntity::class, JournalEntryEntity::class],
-    version = 2,
+    entities = [UserEntity::class, JournalEntryEntity::class, FoodEntity::class],
+    version = 3,
     exportSchema = false,
 )
 abstract class AppDatabase : RoomDatabase() {
     abstract fun userDao(): UserDao
     abstract fun journalDao(): JournalDao
+    abstract fun foodDao(): FoodDao
+
 
     companion object {
         @Volatile

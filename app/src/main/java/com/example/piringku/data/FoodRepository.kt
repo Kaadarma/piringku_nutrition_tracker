@@ -1,47 +1,34 @@
 package com.example.piringku.data
 
 import android.content.Context
+import com.example.piringku.data.local.AppDatabase
+import com.example.piringku.data.local.FoodDatabasePopulator
+import com.example.piringku.data.local.entity.FoodEntity
 import com.example.piringku.model.FoodItem
-import com.google.gson.Gson
-import com.google.gson.reflect.TypeToken
-import java.io.IOException
 
-class FoodRepository private constructor(context: Context) {
+class FoodRepository private constructor(private val context: Context) {
+
+    private val foodDao = AppDatabase.getInstance(context).foodDao()
     private var foodCache: List<FoodItem>? = null
-    private val json: String by lazy {
-        try {
-            context.assets.open("food_data.json")
-                .bufferedReader()
-                .use { it.readText() }
-        } catch (e: IOException) {
-            ""
-        }
-    }
 
     suspend fun loadFoods(): List<FoodItem> {
         foodCache?.let { return it }
-        if (json.isBlank()) return emptyList()
 
-        return try {
-            val type = object : TypeToken<List<FoodItem>>() {}.type
-            val items: List<FoodItem> = Gson().fromJson(json, type)
-            foodCache = items
-            items
-        } catch (e: Exception) {
-            emptyList()
-        }
+        FoodDatabasePopulator.populateIfEmpty(context, AppDatabase.getInstance(context))
+
+        val items = foodDao.getAll().map { it.toFoodItem() }
+        foodCache = items
+        return items
     }
 
-    fun searchFoods(query: String): List<FoodItem> {
-        val cache = foodCache ?: return emptyList()
+    suspend fun searchFoods(query: String): List<FoodItem> {
         if (query.isBlank()) return emptyList()
-        return cache.filter { item ->
-            item.name.contains(query, ignoreCase = true)
-        }
+        return foodDao.search(query).map { it.toFoodItem() }
     }
 
-    fun getFoodById(id: Int): FoodItem? {
-        return foodCache?.find { it.id == id }
+    suspend fun getFoodById(id: Int): FoodItem? {
+        foodCache?.find { it.id == id }?.let { return it }
+        return foodDao.getById(id)?.toFoodItem()
     }
 
     fun getRecommendations(count: Int = 8): List<FoodItem> {
@@ -58,4 +45,16 @@ class FoodRepository private constructor(context: Context) {
             }
         }
     }
+}
+
+private fun FoodEntity.toFoodItem(): FoodItem {
+    return FoodItem(
+        id = id,
+        name = name,
+        calories = calories,
+        proteins = proteins,
+        fat = fat,
+        carbs = carbs,
+        image = image,
+    )
 }
