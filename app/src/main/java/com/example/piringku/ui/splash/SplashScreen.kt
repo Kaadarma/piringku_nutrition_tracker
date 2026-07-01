@@ -26,8 +26,11 @@ import androidx.compose.ui.text.font.FontWeight
 import androidx.compose.ui.unit.dp
 import androidx.compose.ui.unit.sp
 import com.example.piringku.data.UserPreferences
+import com.example.piringku.data.repository.UserRepository
+import kotlinx.coroutines.Dispatchers
 import kotlinx.coroutines.delay
 import kotlinx.coroutines.flow.first
+import kotlinx.coroutines.withContext
 
 @Composable
 fun SplashScreen(
@@ -47,7 +50,17 @@ fun SplashScreen(
         start = true
         delay(2000)
         val data = prefs.userData.first()
-        if (data.isLoggedIn) onNavigateToMain() else onNavigateToLogin()
+        if (data.isLoggedIn) {
+            val userRepo = UserRepository.getInstance(context)
+            val hasUser = withContext(Dispatchers.IO) { userRepo.hasUser() }
+            if (hasUser) {
+                onNavigateToMain()
+            } else {
+                onNavigateToLogin()
+            }
+        } else {
+            onNavigateToLogin()
+        }
     }
 
     Box(

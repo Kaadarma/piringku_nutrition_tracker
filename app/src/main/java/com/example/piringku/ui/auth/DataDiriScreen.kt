@@ -486,6 +486,7 @@ fun DataDiriScreen(
                                     age = age.toIntOrNull() ?: 0,
                                     gender = selectedGender,
                                     activityLevel = activityKey,
+                                    targetWeight = targetWeight.toFloatOrNull() ?: 68f,
                                 )
                                 withContext(Dispatchers.Main) { onSaved() }
                             }

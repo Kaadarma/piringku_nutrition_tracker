@@ -74,6 +74,24 @@ class UserRepository(context: Context) {
         return user != null && user.password == password
     }
 
+    suspend fun ensureUser(email: String, name: String, password: String) {
+        val existing = userDao.getUserOnce()
+        if (existing == null) {
+            userDao.insertUser(UserEntity(name = name, email = email, password = password))
+        }
+    }
+
+    suspend fun hasUser(): Boolean {
+        return userDao.getUserOnce() != null
+    }
+
+    suspend fun ensureUserExists(email: String, name: String, password: String = "") {
+        val existing = userDao.getUserOnce()
+        if (existing == null) {
+            userDao.insertUser(UserEntity(name = name, email = email, password = password))
+        }
+    }
+
     suspend fun saveUser(
         name: String = "",
         email: String = "",
