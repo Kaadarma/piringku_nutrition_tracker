@@ -57,6 +57,7 @@ import kotlinx.coroutines.withContext
 fun LoginScreen(
     onNavigateToRegister: () -> Unit,
     onLoginSuccess: () -> Unit,
+    onLoginSuccessToMain: () -> Unit = onLoginSuccess,
 ) {
     val context = LocalContext.current
     val prefs = remember { UserPreferences.getInstance(context) }
@@ -250,7 +251,12 @@ fun LoginScreen(
                             val name = email.substringBefore("@")
                             userRepo.ensureUser(email.trim(), name, password)
                             prefs.login(name, email.trim(), user.id)
-                            withContext(Dispatchers.Main) { onLoginSuccess() }
+                            val profile = userRepo.getUserSnapshot(user.id)
+                            if (profile.height > 0) {
+                                withContext(Dispatchers.Main) { onLoginSuccessToMain() }
+                            } else {
+                                withContext(Dispatchers.Main) { onLoginSuccess() }
+                            }
                         } else {
                             withContext(Dispatchers.Main) { error = "Email atau password salah" }
                         }

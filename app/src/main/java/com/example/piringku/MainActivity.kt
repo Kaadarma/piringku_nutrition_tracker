@@ -120,6 +120,7 @@ fun PiringkuApp() {
                 LoginScreen(
                     onNavigateToRegister = { navController.navigate(Screen.Register.route) },
                     onLoginSuccess = { navController.navigate(Screen.DataDiri.route) { popUpTo(Screen.Login.route) { inclusive = true } } },
+                    onLoginSuccessToMain = { navController.navigate(Screen.Journal.route) { popUpTo(Screen.Login.route) { inclusive = true } } },
                 )
             }
             composable(Screen.Register.route) {
