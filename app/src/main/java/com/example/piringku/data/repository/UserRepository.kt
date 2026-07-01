@@ -45,11 +45,10 @@ class UserRepository(context: Context) {
         return if (user != null && user.password == password) user else null
     }
 
-    suspend fun ensureUser(email: String, name: String, password: String, context: Context) {
+    suspend fun ensureUser(email: String, name: String, password: String) {
         val existing = userDao.getUserByEmail(email)
         if (existing == null) {
-            val newId = userDao.insertUser(UserEntity(name = name, email = email, password = password))
-            ProfilePictureManager.delete(context, newId)
+            userDao.insertUser(UserEntity(name = name, email = email, password = password))
         }
     }
 

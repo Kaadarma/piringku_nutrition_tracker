@@ -248,7 +248,7 @@ fun LoginScreen(
                         val user = userRepo.login(email.trim(), password)
                         if (user != null) {
                             val name = email.substringBefore("@")
-                            userRepo.ensureUser(email.trim(), name, password, context)
+                            userRepo.ensureUser(email.trim(), name, password)
                             prefs.login(name, email.trim(), user.id)
                             withContext(Dispatchers.Main) { onLoginSuccess() }
                         } else {

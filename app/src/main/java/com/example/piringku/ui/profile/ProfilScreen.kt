@@ -281,8 +281,6 @@ fun ProfilScreen(
                             .fillMaxWidth()
                             .clickable {
                                 scope.launch(Dispatchers.IO) {
-                                    userRepo.clearUser(userId)
-                                    ProfilePictureManager.delete(context, userId)
                                     prefs.logout()
                                     withContext(Dispatchers.Main) { onLogout() }
                                 }
