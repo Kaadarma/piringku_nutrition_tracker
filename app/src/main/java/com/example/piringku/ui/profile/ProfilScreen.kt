@@ -83,25 +83,40 @@ fun ProfilScreen(
     val prefs = remember { UserPreferences.getInstance(context) }
     val userRepo = remember { UserRepository.getInstance(context) }
     val scope = rememberCoroutineScope()
-    val userProfile by userRepo.userProfile.collectAsState(initial = UserProfile())
+    var userId by remember { mutableStateOf(0L) }
+    var userProfile by remember { mutableStateOf(UserProfile()) }
 
     var showPhotoSheet by remember { mutableStateOf(false) }
-    var hasProfilePicture by remember { mutableStateOf(ProfilePictureManager.exists(context)) }
+    var hasProfilePicture by remember { mutableStateOf(false) }
     var cameraImageUri by remember { mutableStateOf<Uri?>(null) }
-    var profilePictureUri by remember { mutableStateOf<Uri?>(ProfilePictureManager.getUri(context)) }
+    var profilePictureUri by remember { mutableStateOf<Uri?>(null) }
+
+    LaunchedEffect(Unit) {
+        userId = prefs.getUserId()
+    }
+
+    LaunchedEffect(userId) {
+        if (userId != 0L) {
+            userRepo.getUserProfile(userId).collect { profile ->
+                userProfile = profile
+            }
+        }
+    }
 
     LaunchedEffect(ProfilePictureManager.photoVersion) {
-        hasProfilePicture = ProfilePictureManager.exists(context)
-        profilePictureUri = ProfilePictureManager.getUri(context)
+        if (userId != 0L) {
+            hasProfilePicture = ProfilePictureManager.exists(context, userId)
+            profilePictureUri = ProfilePictureManager.getUri(context, userId)
+        }
     }
 
     val cameraLauncher = rememberLauncherForActivityResult(
         contract = ActivityResultContracts.TakePicture(),
     ) { success ->
         if (success && cameraImageUri != null) {
-            ProfilePictureManager.save(context, cameraImageUri!!)
+            ProfilePictureManager.save(context, cameraImageUri!!, userId)
             hasProfilePicture = true
-            profilePictureUri = ProfilePictureManager.getUri(context)
+            profilePictureUri = ProfilePictureManager.getUri(context, userId)
         }
     }
 
@@ -109,9 +124,9 @@ fun ProfilScreen(
         contract = ActivityResultContracts.GetContent(),
     ) { uri ->
         if (uri != null) {
-            ProfilePictureManager.save(context, uri)
+            ProfilePictureManager.save(context, uri, userId)
             hasProfilePicture = true
-            profilePictureUri = ProfilePictureManager.getUri(context)
+            profilePictureUri = ProfilePictureManager.getUri(context, userId)
         }
     }
 
@@ -266,8 +281,8 @@ fun ProfilScreen(
                             .fillMaxWidth()
                             .clickable {
                                 scope.launch(Dispatchers.IO) {
-                                    userRepo.clearUser()
-                                    ProfilePictureManager.delete(context)
+                                    userRepo.clearUser(userId)
+                                    ProfilePictureManager.delete(context, userId)
                                     prefs.logout()
                                     withContext(Dispatchers.Main) { onLogout() }
                                 }
@@ -328,7 +343,7 @@ fun ProfilScreen(
                     title = "Ambil Foto",
                     onClick = {
                         showPhotoSheet = false
-                        val file = ProfilePictureManager.getFile(context)
+                        val file = ProfilePictureManager.getFile(context, userId)
                         cameraImageUri = androidx.core.content.FileProvider.getUriForFile(
                             context,
                             "${context.packageName}.fileprovider",
@@ -352,7 +367,7 @@ fun ProfilScreen(
                         titleColor = MaterialTheme.colorScheme.error,
                         onClick = {
                             showPhotoSheet = false
-                            ProfilePictureManager.delete(context)
+                            ProfilePictureManager.delete(context, userId)
                             hasProfilePicture = false
                             profilePictureUri = null
                         },

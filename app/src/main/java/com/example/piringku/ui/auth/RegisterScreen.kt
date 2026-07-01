@@ -275,8 +275,8 @@ fun RegisterScreen(
                         }
                         else -> {
                             scope.launch(Dispatchers.IO) {
-                                userRepo.register(name.trim(), email.trim(), password)
-                                prefs.login(name.trim(), email.trim())
+                                val newId = userRepo.register(name.trim(), email.trim(), password)
+                                prefs.login(name.trim(), email.trim(), newId)
                                 withContext(Dispatchers.Main) {
                                     onRegistered()
                                 }

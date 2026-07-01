@@ -7,9 +7,11 @@ import androidx.datastore.preferences.core.booleanPreferencesKey
 import androidx.datastore.preferences.core.edit
 import androidx.datastore.preferences.core.floatPreferencesKey
 import androidx.datastore.preferences.core.intPreferencesKey
+import androidx.datastore.preferences.core.longPreferencesKey
 import androidx.datastore.preferences.core.stringPreferencesKey
 import androidx.datastore.preferences.preferencesDataStore
 import kotlinx.coroutines.flow.Flow
+import kotlinx.coroutines.flow.first
 import kotlinx.coroutines.flow.map
 
 private val Context.dataStore: DataStore<Preferences> by preferencesDataStore(name = "user_prefs")
@@ -30,6 +32,7 @@ class UserPreferences(private val context: Context) {
         val isLoggedIn: Boolean = false,
         val name: String = "",
         val email: String = "",
+        val userId: Long = 0,
         val height: Int = 170,
         val weight: Float = 65f,
         val age: Int = 25,
@@ -47,6 +50,7 @@ class UserPreferences(private val context: Context) {
     private val IS_LOGGED_IN = booleanPreferencesKey("is_logged_in")
     private val NAME = stringPreferencesKey("name")
     private val EMAIL = stringPreferencesKey("email")
+    private val USER_ID = longPreferencesKey("user_id")
     private val HEIGHT = intPreferencesKey("height")
     private val WEIGHT = floatPreferencesKey("weight")
     private val AGE = intPreferencesKey("age")
@@ -62,6 +66,7 @@ class UserPreferences(private val context: Context) {
             isLoggedIn = prefs[IS_LOGGED_IN] ?: false,
             name = prefs[NAME] ?: "",
             email = prefs[EMAIL] ?: "",
+            userId = prefs[USER_ID] ?: 0,
             height = prefs[HEIGHT] ?: 170,
             weight = prefs[WEIGHT] ?: 65f,
             age = prefs[AGE] ?: 25,
@@ -79,12 +84,17 @@ class UserPreferences(private val context: Context) {
         )
     }
 
-    suspend fun login(name: String, email: String) {
+    suspend fun login(name: String, email: String, userId: Long) {
         context.dataStore.edit { prefs ->
             prefs[IS_LOGGED_IN] = true
             prefs[NAME] = name
             prefs[EMAIL] = email
+            prefs[USER_ID] = userId
         }
+    }
+
+    suspend fun getUserId(): Long {
+        return context.dataStore.data.first()[USER_ID] ?: 0
     }
 
     suspend fun saveDataDiri(height: Int, weight: Float, age: Int, gender: String, activityLevel: String) {

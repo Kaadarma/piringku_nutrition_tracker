@@ -39,9 +39,11 @@ import androidx.compose.material3.IconButton
 import androidx.compose.material3.MaterialTheme
 import androidx.compose.material3.Text
 import androidx.compose.runtime.Composable
-import androidx.compose.runtime.collectAsState
+import androidx.compose.runtime.LaunchedEffect
 import androidx.compose.runtime.getValue
+import androidx.compose.runtime.mutableStateOf
 import androidx.compose.runtime.remember
+import androidx.compose.runtime.setValue
 import androidx.compose.ui.Alignment
 import androidx.compose.ui.Modifier
 import androidx.compose.ui.geometry.Offset
@@ -57,6 +59,7 @@ import androidx.compose.ui.text.font.FontWeight
 import androidx.compose.ui.text.style.TextAlign
 import androidx.compose.ui.unit.dp
 import androidx.compose.ui.unit.sp
+import com.example.piringku.data.UserPreferences
 import com.example.piringku.data.repository.UserProfile
 import com.example.piringku.data.repository.UserRepository
 import com.example.piringku.ui.theme.BorderSubtle
@@ -67,8 +70,18 @@ import com.example.piringku.ui.theme.SecondaryContainer
 @Composable
 fun ProgresGoalsScreen(onBack: () -> Unit) {
     val context = LocalContext.current
+    val prefs = remember { UserPreferences.getInstance(context) }
     val userRepo = remember { UserRepository.getInstance(context) }
-    val profile by userRepo.userProfile.collectAsState(initial = UserProfile())
+    var profile by remember { mutableStateOf(UserProfile()) }
+    var userId by remember { mutableStateOf(0L) }
+
+    LaunchedEffect(Unit) { userId = prefs.getUserId() }
+
+    LaunchedEffect(userId) {
+        if (userId != 0L) {
+            userRepo.getUserProfile(userId).collect { profile = it }
+        }
+    }
 
     Column(
         modifier = Modifier

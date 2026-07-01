@@ -245,11 +245,11 @@ fun LoginScreen(
                         return@Button
                     }
                     scope.launch(Dispatchers.IO) {
-                        val valid = userRepo.login(email.trim(), password)
-                        if (valid) {
+                        val user = userRepo.login(email.trim(), password)
+                        if (user != null) {
                             val name = email.substringBefore("@")
                             userRepo.ensureUser(email.trim(), name, password, context)
-                            prefs.login(name, email.trim())
+                            prefs.login(name, email.trim(), user.id)
                             withContext(Dispatchers.Main) { onLoginSuccess() }
                         } else {
                             withContext(Dispatchers.Main) { error = "Email atau password salah" }

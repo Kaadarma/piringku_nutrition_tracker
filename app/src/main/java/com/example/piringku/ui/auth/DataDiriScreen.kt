@@ -56,6 +56,7 @@ import androidx.compose.ui.text.input.ImeAction
 import androidx.compose.ui.text.input.KeyboardType
 import androidx.compose.ui.unit.dp
 import androidx.compose.ui.unit.sp
+import com.example.piringku.data.UserPreferences
 import com.example.piringku.data.repository.UserRepository
 import com.example.piringku.ui.theme.BorderSubtle
 import com.example.piringku.util.ProfilePictureManager
@@ -71,8 +72,10 @@ fun DataDiriScreen(
     onSaved: () -> Unit,
 ) {
     val context = LocalContext.current
+    val prefs = remember { UserPreferences.getInstance(context) }
     val userRepo = remember { UserRepository.getInstance(context) }
     val scope = rememberCoroutineScope()
+    var userId by remember { mutableStateOf(0L) }
     var name by remember { mutableStateOf("") }
     var age by remember { mutableStateOf("") }
     var selectedGender by remember { mutableStateOf("Pria") }
@@ -84,16 +87,19 @@ fun DataDiriScreen(
     var selectedActivity by remember { mutableStateOf("Cukup aktif (3-5 hari/minggu)") }
     var activityExpanded by remember { mutableStateOf(false) }
     var dataLoaded by remember { mutableStateOf(false) }
-    var hasProfilePicture by remember { mutableStateOf(ProfilePictureManager.exists(context)) }
-    var profilePictureUri by remember { mutableStateOf<Uri?>(ProfilePictureManager.getUri(context)) }
+    var hasProfilePicture by remember { mutableStateOf(false) }
+    var profilePictureUri by remember { mutableStateOf<Uri?>(null) }
 
     LaunchedEffect(ProfilePictureManager.photoVersion) {
-        hasProfilePicture = ProfilePictureManager.exists(context)
-        profilePictureUri = ProfilePictureManager.getUri(context)
+        if (userId != 0L) {
+            hasProfilePicture = ProfilePictureManager.exists(context, userId)
+            profilePictureUri = ProfilePictureManager.getUri(context, userId)
+        }
     }
 
     LaunchedEffect(Unit) {
-        val profile = withContext(Dispatchers.IO) { userRepo.getUserSnapshot() }
+        userId = prefs.getUserId()
+        val profile = withContext(Dispatchers.IO) { userRepo.getUserSnapshot(userId) }
         if (profile.name.isNotBlank()) {
             name = profile.name
             age = if (profile.age > 0) profile.age.toString() else ""
@@ -478,9 +484,11 @@ fun DataDiriScreen(
                             val activityKey = activityLevels.firstOrNull { it.first == selectedActivity }?.second
                                 ?: "cukup_aktif"
                             scope.launch(Dispatchers.IO) {
+                                val currentEmail = userRepo.getUserSnapshot(userId).email
                                 userRepo.saveUser(
+                                    userId = userId,
                                     name = name,
-                                    email = userRepo.getUserSnapshot().email,
+                                    email = currentEmail,
                                     height = height.toIntOrNull() ?: 0,
                                     weight = weight.toFloatOrNull() ?: 0f,
                                     age = age.toIntOrNull() ?: 0,

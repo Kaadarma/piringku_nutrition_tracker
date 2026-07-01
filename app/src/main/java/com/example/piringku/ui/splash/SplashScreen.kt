@@ -53,11 +53,11 @@ fun SplashScreen(
         val data = prefs.userData.first()
         if (data.isLoggedIn) {
             val userRepo = UserRepository.getInstance(context)
-            val hasUser = withContext(Dispatchers.IO) { userRepo.hasUser() }
+            val hasUser = withContext(Dispatchers.IO) { userRepo.hasUser(data.userId) }
             if (hasUser) {
                 onNavigateToMain()
             } else {
-                withContext(Dispatchers.IO) { ProfilePictureManager.delete(context) }
+                withContext(Dispatchers.IO) { ProfilePictureManager.delete(context, data.userId) }
                 onNavigateToLogin()
             }
         } else {

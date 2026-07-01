@@ -3,10 +3,12 @@ package com.example.piringku.data.repository
 import android.content.Context
 import com.example.piringku.data.local.AppDatabase
 import com.example.piringku.data.local.entity.UserEntity
+import com.example.piringku.util.ProfilePictureManager
 import kotlinx.coroutines.flow.Flow
 import kotlinx.coroutines.flow.map
 
 data class UserProfile(
+    val id: Long = 0,
     val name: String = "",
     val email: String = "",
     val password: String = "",
@@ -26,74 +28,37 @@ class UserRepository(context: Context) {
 
     private val userDao = AppDatabase.getInstance(context).userDao()
 
-    val userProfile: Flow<UserProfile> = userDao.getUser().map { entity ->
-        entity?.let {
-            UserProfile(
-                name = it.name,
-                email = it.email,
-                height = it.height,
-                weight = it.weight,
-                age = it.age,
-                gender = it.gender,
-                activityLevel = it.activityLevel,
-                targetWeight = it.targetWeight,
-                goalCalories = it.goalCalories,
-                goalProtein = it.goalProtein,
-                goalFat = it.goalFat,
-                goalCarbs = it.goalCarbs,
-            )
-        } ?: UserProfile()
+    fun getUserProfile(userId: Long): Flow<UserProfile> = userDao.getUser(userId).map { entity ->
+        entity?.let { it.toProfile() } ?: UserProfile()
     }
 
-    suspend fun getUserSnapshot(): UserProfile {
-        val entity = userDao.getUserOnce()
-        return entity?.let {
-            UserProfile(
-                name = it.name,
-                email = it.email,
-                height = it.height,
-                weight = it.weight,
-                age = it.age,
-                gender = it.gender,
-                activityLevel = it.activityLevel,
-                targetWeight = it.targetWeight,
-                goalCalories = it.goalCalories,
-                goalProtein = it.goalProtein,
-                goalFat = it.goalFat,
-                goalCarbs = it.goalCarbs,
-            )
-        } ?: UserProfile()
+    suspend fun getUserSnapshot(userId: Long): UserProfile {
+        return userDao.getUserOnce(userId)?.toProfile() ?: UserProfile()
     }
 
-    suspend fun register(name: String, email: String, password: String) {
-        userDao.insertUser(UserEntity(name = name, email = email, password = password))
+    suspend fun register(name: String, email: String, password: String): Long {
+        return userDao.insertUser(UserEntity(name = name, email = email, password = password))
     }
 
-    suspend fun login(email: String, password: String): Boolean {
+    suspend fun login(email: String, password: String): UserEntity? {
         val user = userDao.getUserByEmail(email)
-        return user != null && user.password == password
+        return if (user != null && user.password == password) user else null
     }
 
-    suspend fun ensureUser(email: String, name: String, password: String, context: android.content.Context? = null) {
-        val existing = userDao.getUserOnce()
+    suspend fun ensureUser(email: String, name: String, password: String, context: Context) {
+        val existing = userDao.getUserByEmail(email)
         if (existing == null) {
-            userDao.insertUser(UserEntity(name = name, email = email, password = password))
-            context?.let { com.example.piringku.util.ProfilePictureManager.delete(it) }
+            val newId = userDao.insertUser(UserEntity(name = name, email = email, password = password))
+            ProfilePictureManager.delete(context, newId)
         }
     }
 
-    suspend fun hasUser(): Boolean {
-        return userDao.getUserOnce() != null
-    }
-
-    suspend fun ensureUserExists(email: String, name: String, password: String = "") {
-        val existing = userDao.getUserOnce()
-        if (existing == null) {
-            userDao.insertUser(UserEntity(name = name, email = email, password = password))
-        }
+    suspend fun hasUser(userId: Long): Boolean {
+        return userDao.getUserOnce(userId) != null
     }
 
     suspend fun saveUser(
+        userId: Long,
         name: String = "",
         email: String = "",
         password: String = "",
@@ -108,9 +73,10 @@ class UserRepository(context: Context) {
         goalFat: Float = 65f,
         goalCarbs: Float = 250f,
     ) {
-        val existing = userDao.getUserOnce()
+        val existing = userDao.getUserOnce(userId)
         userDao.insertUser(
             (existing ?: UserEntity()).copy(
+                id = userId,
                 name = name,
                 email = email,
                 password = password.ifEmpty { existing?.password ?: "" },
@@ -128,8 +94,8 @@ class UserRepository(context: Context) {
         )
     }
 
-    suspend fun clearUser() {
-        userDao.deleteAll()
+    suspend fun clearUser(userId: Long) {
+        userDao.deleteUser(userId)
     }
 
     companion object {
@@ -142,4 +108,22 @@ class UserRepository(context: Context) {
             }
         }
     }
+}
+
+private fun UserEntity.toProfile(): UserProfile {
+    return UserProfile(
+        id = id,
+        name = name,
+        email = email,
+        height = height,
+        weight = weight,
+        age = age,
+        gender = gender,
+        activityLevel = activityLevel,
+        targetWeight = targetWeight,
+        goalCalories = goalCalories,
+        goalProtein = goalProtein,
+        goalFat = goalFat,
+        goalCarbs = goalCarbs,
+    )
 }
