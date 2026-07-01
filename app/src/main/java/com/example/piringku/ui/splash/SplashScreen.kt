@@ -27,6 +27,7 @@ import androidx.compose.ui.unit.dp
 import androidx.compose.ui.unit.sp
 import com.example.piringku.data.UserPreferences
 import com.example.piringku.data.repository.UserRepository
+import com.example.piringku.util.ProfilePictureManager
 import kotlinx.coroutines.Dispatchers
 import kotlinx.coroutines.delay
 import kotlinx.coroutines.flow.first
@@ -56,6 +57,7 @@ fun SplashScreen(
             if (hasUser) {
                 onNavigateToMain()
             } else {
+                withContext(Dispatchers.IO) { ProfilePictureManager.delete(context) }
                 onNavigateToLogin()
             }
         } else {

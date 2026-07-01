@@ -267,6 +267,7 @@ fun ProfilScreen(
                             .clickable {
                                 scope.launch(Dispatchers.IO) {
                                     userRepo.clearUser()
+                                    ProfilePictureManager.delete(context)
                                     prefs.logout()
                                     withContext(Dispatchers.Main) { onLogout() }
                                 }

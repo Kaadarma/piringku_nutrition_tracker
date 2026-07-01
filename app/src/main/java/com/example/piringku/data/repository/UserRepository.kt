@@ -74,10 +74,11 @@ class UserRepository(context: Context) {
         return user != null && user.password == password
     }
 
-    suspend fun ensureUser(email: String, name: String, password: String) {
+    suspend fun ensureUser(email: String, name: String, password: String, context: android.content.Context? = null) {
         val existing = userDao.getUserOnce()
         if (existing == null) {
             userDao.insertUser(UserEntity(name = name, email = email, password = password))
+            context?.let { com.example.piringku.util.ProfilePictureManager.delete(it) }
         }
     }
 
