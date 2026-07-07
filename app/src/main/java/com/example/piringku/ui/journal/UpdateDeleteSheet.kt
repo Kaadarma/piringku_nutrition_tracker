@@ -236,7 +236,7 @@ fun UpdateDeleteSheet(
         OutlinedButton(
             onClick = {
                 CoroutineScope(Dispatchers.IO).launch {
-                    repository.deleteEntryById(entry.id)
+                    repository.deleteEntryById(entry.id, entry.userId)
                     withContext(Dispatchers.Main) {
                         onDeleted()
                     }

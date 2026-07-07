@@ -16,18 +16,18 @@ class JournalRepository private constructor(context: Context) {
 
     private val journalDao = AppDatabase.getInstance(context).journalDao()
 
-    fun getEntriesByDate(date: LocalDate): Flow<List<JournalEntry>> {
+    fun getEntriesByDate(date: LocalDate, userId: Long): Flow<List<JournalEntry>> {
         val start = date.atStartOfDay(ZoneOffset.UTC).toInstant().toEpochMilli()
         val end = date.plusDays(1).atStartOfDay(ZoneOffset.UTC).toInstant().toEpochMilli()
-        return journalDao.getEntriesByDateRange(start, end).map { entities ->
+        return journalDao.getEntriesByDateRange(userId, start, end).map { entities ->
             entities.map { it.toJournalEntry() }
         }
     }
 
-    fun getDailyNutrition(date: LocalDate): Flow<DailyNutrition> {
+    fun getDailyNutrition(date: LocalDate, userId: Long): Flow<DailyNutrition> {
         val start = date.atStartOfDay(ZoneOffset.UTC).toInstant().toEpochMilli()
         val end = date.plusDays(1).atStartOfDay(ZoneOffset.UTC).toInstant().toEpochMilli()
-        return journalDao.getEntriesByDateRange(start, end).map { entities ->
+        return journalDao.getEntriesByDateRange(userId, start, end).map { entities ->
             DailyNutrition(
                 calories = entities.sumOf { it.calories.toDouble() }.toFloat(),
                 protein = entities.sumOf { it.protein.toDouble() }.toFloat(),
@@ -42,10 +42,10 @@ class JournalRepository private constructor(context: Context) {
      * Dipakai StatsScreen untuk hitung rata-rata mingguan/bulanan, rasio makro, dan makanan
      * yang paling sering dimakan pada periode tersebut.
      */
-    fun getEntriesInRange(startDate: LocalDate, endDateExclusive: LocalDate): Flow<List<JournalEntry>> {
+    fun getEntriesInRange(startDate: LocalDate, endDateExclusive: LocalDate, userId: Long): Flow<List<JournalEntry>> {
         val start = startDate.atStartOfDay(ZoneOffset.UTC).toInstant().toEpochMilli()
         val end = endDateExclusive.atStartOfDay(ZoneOffset.UTC).toInstant().toEpochMilli()
-        return journalDao.getEntriesByDateRange(start, end).map { entities ->
+        return journalDao.getEntriesByDateRange(userId, start, end).map { entities ->
             entities.map { it.toJournalEntry() }
         }
     }
@@ -62,15 +62,16 @@ class JournalRepository private constructor(context: Context) {
         journalDao.deleteEntry(entry.toEntity())
     }
 
-    suspend fun deleteEntryById(id: Long) {
-        journalDao.deleteEntryById(id)
+    suspend fun deleteEntryById(id: Long, userId: Long) {
+        journalDao.deleteEntryById(id, userId)
     }
 
-    suspend fun getEntryById(id: Long): JournalEntry? {
-        return journalDao.getEntryById(id)?.toJournalEntry()
+    suspend fun getEntryById(id: Long, userId: Long): JournalEntry? {
+        return journalDao.getEntryById(id, userId)?.toJournalEntry()
     }
 
     fun createEntryFromFood(
+        userId: Long,
         foodId: Int,
         foodName: String,
         portion: Float,
@@ -82,6 +83,7 @@ class JournalRepository private constructor(context: Context) {
         imageUrl: String,
     ): JournalEntry {
         return JournalEntry(
+            userId = userId,
             foodId = foodId,
             foodName = foodName,
             portion = portion,
@@ -110,6 +112,7 @@ class JournalRepository private constructor(context: Context) {
 private fun JournalEntryEntity.toJournalEntry(): JournalEntry {
     return JournalEntry(
         id = id,
+        userId = userId,
         foodId = foodId,
         foodName = foodName,
         portion = portion,
@@ -126,6 +129,7 @@ private fun JournalEntryEntity.toJournalEntry(): JournalEntry {
 private fun JournalEntry.toEntity(): JournalEntryEntity {
     return JournalEntryEntity(
         id = id,
+        userId = userId,
         foodId = foodId,
         foodName = foodName,
         portion = portion,

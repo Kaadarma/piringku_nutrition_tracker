@@ -13,7 +13,7 @@ import com.example.piringku.data.local.entity.FoodEntity
 
 @Database(
     entities = [UserEntity::class, JournalEntryEntity::class, FoodEntity::class],
-    version = 4,
+    version = 5,   // sebelumnya 4
     exportSchema = false,
 )
 abstract class AppDatabase : RoomDatabase() {

@@ -56,6 +56,8 @@ import androidx.compose.ui.platform.LocalContext
 import androidx.compose.ui.text.font.FontWeight
 import androidx.compose.ui.unit.dp
 import androidx.compose.ui.window.Dialog
+import androidx.compose.runtime.LaunchedEffect
+import com.example.piringku.data.UserPreferences
 import com.example.piringku.data.FoodRepository
 import com.example.piringku.data.JournalRepository
 import com.example.piringku.data.TargetPreferences
@@ -77,6 +79,11 @@ fun JournalScreen() {
     val repository = remember { JournalRepository.getInstance(context) }
     val foodRepository = remember { FoodRepository.getInstance(context) }
     val scope = rememberCoroutineScope()
+    val userPrefs = remember { UserPreferences.getInstance(context) }
+    var userId by remember { mutableLongStateOf(0L) }
+    LaunchedEffect(Unit) {
+        userId = userPrefs.getUserId()
+    }
     val addSheetState = rememberModalBottomSheetState(skipPartiallyExpanded = true)
     val editSheetState = rememberModalBottomSheetState(skipPartiallyExpanded = true)
 
@@ -85,8 +92,8 @@ fun JournalScreen() {
     var showDatePicker by remember { mutableStateOf(false) }
     val datePickerState = rememberDatePickerState()
 
-    val entries by repository.getEntriesByDate(selectedDate).collectAsState(initial = emptyList())
-    val nutrition by repository.getDailyNutrition(selectedDate).collectAsState(initial = com.example.piringku.model.DailyNutrition())
+    val entries by repository.getEntriesByDate(selectedDate, userId).collectAsState(initial = emptyList())
+    val nutrition by repository.getDailyNutrition(selectedDate, userId).collectAsState(initial = com.example.piringku.model.DailyNutrition())
 
     var showAddSheet by remember { mutableStateOf(false) }
     var selectedEntryId by remember { mutableLongStateOf(-1L) }
@@ -186,6 +193,7 @@ fun JournalScreen() {
             if (selectedFood != null) {
                 FoodDetailSheet(
                     food = selectedFood!!,
+                    userId = userId,
                     onDismiss = { showAddSheet = false; selectedFood = null },
                     onAdded = {
                         showAddSheet = false

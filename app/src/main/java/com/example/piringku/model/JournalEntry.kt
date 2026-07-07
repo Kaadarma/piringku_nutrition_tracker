@@ -4,6 +4,7 @@ import java.time.Instant
 
 data class JournalEntry(
     val id: Long = 0,
+    val userId: Long = 0,
     val foodId: Int,
     val foodName: String,
     val portion: Float,

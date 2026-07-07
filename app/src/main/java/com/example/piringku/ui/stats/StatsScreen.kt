@@ -36,6 +36,9 @@ import androidx.compose.ui.platform.LocalContext
 import androidx.compose.ui.text.font.FontWeight
 import androidx.compose.ui.unit.dp
 import androidx.compose.ui.unit.sp
+import androidx.compose.runtime.LaunchedEffect
+import androidx.compose.runtime.mutableLongStateOf
+import com.example.piringku.data.UserPreferences
 import coil.compose.AsyncImage
 import com.example.piringku.data.DailyTargets
 import com.example.piringku.data.JournalRepository
@@ -139,6 +142,11 @@ fun StatsScreen() {
     val journalRepository = remember { JournalRepository.getInstance(context) }
     val targetPrefs = remember { TargetPreferences.getInstance(context) }
     val targets: DailyTargets = remember { targetPrefs.getTargets() }
+    val userPrefs = remember { UserPreferences.getInstance(context) }
+    var userId by remember { mutableLongStateOf(0L) }
+    LaunchedEffect(Unit) {
+        userId = userPrefs.getUserId()
+    }
 
     var selectedPeriod by remember { mutableIntStateOf(0) } // 0 = Weekly, 1 = Monthly
     val periodDays = if (selectedPeriod == 0) 7 else 30
@@ -150,12 +158,12 @@ fun StatsScreen() {
 
     // Entries untuk ringkasan periode (rata-rata, rasio macro, most consumed)
     val periodEntries by journalRepository
-        .getEntriesInRange(periodStart, today.plusDays(1))
+        .getEntriesInRange(periodStart, today.plusDays(1), userId)
         .collectAsState(initial = emptyList())
 
     // Grafik batang harian selalu menampilkan 7 hari terakhir, apapun toggle-nya
     val last7Entries by journalRepository
-        .getEntriesInRange(last7Start, today.plusDays(1))
+        .getEntriesInRange(last7Start, today.plusDays(1), userId)
         .collectAsState(initial = emptyList())
 
     val summary = remember(periodEntries, periodDays) { computeStatsSummary(periodEntries, periodDays) }

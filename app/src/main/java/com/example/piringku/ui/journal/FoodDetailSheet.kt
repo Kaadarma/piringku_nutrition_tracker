@@ -61,6 +61,7 @@ import kotlinx.coroutines.withContext
 @Composable
 fun FoodDetailSheet(
     food: FoodItem,
+    userId: Long,
     onDismiss: () -> Unit,
     onAdded: () -> Unit,
     onBack: () -> Unit = {},
@@ -293,6 +294,7 @@ fun FoodDetailSheet(
             onClick = {
                 CoroutineScope(Dispatchers.IO).launch {
                     repository.createEntryFromFood(
+                        userId = userId,
                         foodId = food.id,
                         foodName = food.name,
                         portion = portion,
