@@ -22,6 +22,7 @@ import androidx.compose.foundation.verticalScroll
 import androidx.compose.material3.MaterialTheme
 import androidx.compose.material3.Text
 import androidx.compose.runtime.Composable
+import androidx.compose.runtime.collectAsState
 import androidx.compose.runtime.getValue
 import androidx.compose.runtime.mutableIntStateOf
 import androidx.compose.runtime.remember
@@ -31,19 +32,134 @@ import androidx.compose.ui.Modifier
 import androidx.compose.ui.draw.clip
 import androidx.compose.ui.graphics.Color
 import androidx.compose.ui.layout.ContentScale
+import androidx.compose.ui.platform.LocalContext
 import androidx.compose.ui.text.font.FontWeight
 import androidx.compose.ui.unit.dp
 import androidx.compose.ui.unit.sp
 import coil.compose.AsyncImage
+import com.example.piringku.data.DailyTargets
+import com.example.piringku.data.JournalRepository
+import com.example.piringku.data.TargetPreferences
+import com.example.piringku.model.JournalEntry
 import com.example.piringku.ui.theme.BorderSubtle
 import com.example.piringku.ui.theme.DataBlue
 import com.example.piringku.ui.theme.ErrorRed
 import com.example.piringku.ui.theme.HealthGreen
 import com.example.piringku.ui.theme.EnergyOrange
+import java.time.LocalDate
+import java.time.ZoneOffset
+import java.time.format.TextStyle
+import java.util.Locale
+import kotlin.math.abs
+import kotlin.math.roundToInt
+
+// ---------------------------------------------------------------------------
+// Data holder murni (bukan Composable) hasil olahan dari JournalEntry asli.
+// ---------------------------------------------------------------------------
+
+private data class DayBar(val label: String, val calories: Float)
+
+private data class MostConsumedItem(
+    val name: String,
+    val imageUrl: String,
+    val timesInPeriod: Int,
+    val caloriesPerServe: Float,
+)
+
+private data class StatsSummary(
+    val averageCalories: Float = 0f,
+    val averageProtein: Float = 0f,
+    val averageFat: Float = 0f,
+    val averageCarbs: Float = 0f,
+    val proteinRatio: Float = 0f,
+    val carbsRatio: Float = 0f,
+    val fatRatio: Float = 0f,
+    val mostConsumed: List<MostConsumedItem> = emptyList(),
+)
+
+private fun computeStatsSummary(entries: List<JournalEntry>, periodDays: Int): StatsSummary {
+    if (entries.isEmpty()) return StatsSummary()
+
+    val totalCalories = entries.sumOf { it.calories.toDouble() }.toFloat()
+    val totalProtein = entries.sumOf { it.protein.toDouble() }.toFloat()
+    val totalFat = entries.sumOf { it.fat.toDouble() }.toFloat()
+    val totalCarbs = entries.sumOf { it.carbs.toDouble() }.toFloat()
+
+    // Konversi gram -> kkal supaya rasio macro donut chart akurat secara nutrisi
+    // (protein & karbo = 4 kkal/gram, lemak = 9 kkal/gram).
+    val proteinKcal = totalProtein * 4f
+    val carbsKcal = totalCarbs * 4f
+    val fatKcal = totalFat * 9f
+    val totalMacroKcal = (proteinKcal + carbsKcal + fatKcal).coerceAtLeast(1f)
+
+    val mostConsumed = entries
+        .groupBy { it.foodName }
+        .map { (name, group) ->
+            MostConsumedItem(
+                name = name,
+                imageUrl = group.firstOrNull { it.imageUrl.isNotBlank() }?.imageUrl ?: "",
+                timesInPeriod = group.size,
+                caloriesPerServe = group.sumOf { it.calories.toDouble() }.toFloat() / group.size,
+            )
+        }
+        .sortedByDescending { it.timesInPeriod }
+        .take(3)
+
+    return StatsSummary(
+        averageCalories = totalCalories / periodDays,
+        averageProtein = totalProtein / periodDays,
+        averageFat = totalFat / periodDays,
+        averageCarbs = totalCarbs / periodDays,
+        proteinRatio = proteinKcal / totalMacroKcal,
+        carbsRatio = carbsKcal / totalMacroKcal,
+        fatRatio = fatKcal / totalMacroKcal,
+        mostConsumed = mostConsumed,
+    )
+}
+
+private fun computeDailyBars(entries: List<JournalEntry>, startDate: LocalDate): List<DayBar> {
+    val caloriesByDate: Map<LocalDate, Float> = entries
+        .groupBy { it.timestamp.atZone(ZoneOffset.UTC).toLocalDate() }
+        .mapValues { (_, group) -> group.sumOf { it.calories.toDouble() }.toFloat() }
+
+    return (0..6).map { offset ->
+        val date = startDate.plusDays(offset.toLong())
+        val label = date.dayOfWeek.getDisplayName(TextStyle.SHORT, Locale.ENGLISH).uppercase()
+        DayBar(label = label, calories = caloriesByDate[date] ?: 0f)
+    }
+}
+
+// ---------------------------------------------------------------------------
+// Screen utama
+// ---------------------------------------------------------------------------
 
 @Composable
 fun StatsScreen() {
-    var selectedPeriod by remember { mutableIntStateOf(0) }
+    val context = LocalContext.current
+    val journalRepository = remember { JournalRepository.getInstance(context) }
+    val targetPrefs = remember { TargetPreferences.getInstance(context) }
+    val targets: DailyTargets = remember { targetPrefs.getTargets() }
+
+    var selectedPeriod by remember { mutableIntStateOf(0) } // 0 = Weekly, 1 = Monthly
+    val periodDays = if (selectedPeriod == 0) 7 else 30
+    val periodLabel = if (selectedPeriod == 0) "Weekly" else "Monthly"
+
+    val today = remember { LocalDate.now() }
+    val periodStart = remember(periodDays) { today.minusDays((periodDays - 1).toLong()) }
+    val last7Start = remember { today.minusDays(6) }
+
+    // Entries untuk ringkasan periode (rata-rata, rasio macro, most consumed)
+    val periodEntries by journalRepository
+        .getEntriesInRange(periodStart, today.plusDays(1))
+        .collectAsState(initial = emptyList())
+
+    // Grafik batang harian selalu menampilkan 7 hari terakhir, apapun toggle-nya
+    val last7Entries by journalRepository
+        .getEntriesInRange(last7Start, today.plusDays(1))
+        .collectAsState(initial = emptyList())
+
+    val summary = remember(periodEntries, periodDays) { computeStatsSummary(periodEntries, periodDays) }
+    val dailyBars = remember(last7Entries, last7Start) { computeDailyBars(last7Entries, last7Start) }
 
     Column(
         modifier = Modifier
@@ -52,43 +168,57 @@ fun StatsScreen() {
             .padding(top = 16.dp)
             .verticalScroll(rememberScrollState()),
     ) {
-            Text(
-                text = "Statistik Nutrisi",
-                style = MaterialTheme.typography.headlineMedium,
-                color = MaterialTheme.colorScheme.primary,
-                fontWeight = FontWeight.Bold,
-                modifier = Modifier.padding(horizontal = 20.dp, vertical = 8.dp),
-            )
+        Text(
+            text = "Statistik Nutrisi",
+            style = MaterialTheme.typography.headlineMedium,
+            color = MaterialTheme.colorScheme.primary,
+            fontWeight = FontWeight.Bold,
+            modifier = Modifier.padding(horizontal = 20.dp, vertical = 8.dp),
+        )
 
-            PeriodSelector(
-                selectedIndex = selectedPeriod,
-                onSelect = { selectedPeriod = it },
-                modifier = Modifier.padding(horizontal = 20.dp),
-            )
+        PeriodSelector(
+            selectedIndex = selectedPeriod,
+            onSelect = { selectedPeriod = it },
+            modifier = Modifier.padding(horizontal = 20.dp),
+        )
 
-            Spacer(Modifier.height(16.dp))
+        Spacer(Modifier.height(16.dp))
 
-            WeeklySummaryCard()
+        WeeklySummaryCard(
+            periodLabel = periodLabel,
+            averageCalories = summary.averageCalories,
+            targetCalories = targets.calories,
+        )
 
-            Spacer(Modifier.height(16.dp))
+        Spacer(Modifier.height(16.dp))
 
-            DailyCalorieChart()
+        DailyCalorieChart(bars = dailyBars, targetCalories = targets.calories)
 
-            Spacer(Modifier.height(16.dp))
+        Spacer(Modifier.height(16.dp))
 
-            MacroRingChart()
+        MacroRingChart(
+            periodLabel = periodLabel,
+            proteinRatio = summary.proteinRatio,
+            carbsRatio = summary.carbsRatio,
+            fatRatio = summary.fatRatio,
+        )
 
-            Spacer(Modifier.height(24.dp))
+        Spacer(Modifier.height(24.dp))
 
-            NutrientAchievementSection()
+        NutrientAchievementSection(
+            averageProtein = summary.averageProtein,
+            averageCarbs = summary.averageCarbs,
+            averageFat = summary.averageFat,
+            targets = targets,
+        )
 
-            Spacer(Modifier.height(24.dp))
+        Spacer(Modifier.height(24.dp))
 
-            MostConsumedSection()
+        MostConsumedSection(items = summary.mostConsumed)
 
-            Spacer(Modifier.height(80.dp))
-        }
+        Spacer(Modifier.height(80.dp))
     }
+}
 
 @Composable
 private fun PeriodSelector(
@@ -123,7 +253,13 @@ private fun PeriodSelector(
 }
 
 @Composable
-private fun WeeklySummaryCard() {
+private fun WeeklySummaryCard(periodLabel: String, averageCalories: Float, targetCalories: Float) {
+    val progress = if (targetCalories > 0f) (averageCalories / targetCalories).coerceIn(0f, 1f) else 0f
+    val diffPercent = if (targetCalories > 0f) {
+        (((averageCalories - targetCalories) / targetCalories) * 100).roundToInt()
+    } else 0
+    val isUnderTarget = diffPercent <= 0
+
     Box(
         modifier = Modifier
             .fillMaxWidth()
@@ -141,7 +277,7 @@ private fun WeeklySummaryCard() {
             ) {
                 Column {
                     Text(
-                        text = "WEEKLY SUMMARY",
+                        text = "${periodLabel.uppercase()} SUMMARY",
                         style = MaterialTheme.typography.labelSmall,
                         color = MaterialTheme.colorScheme.onSurfaceVariant,
                     )
@@ -155,20 +291,20 @@ private fun WeeklySummaryCard() {
                 Box(
                     modifier = Modifier
                         .clip(RoundedCornerShape(24.dp))
-                        .background(Color(0xFFB1F0CE))
+                        .background(if (isUnderTarget) Color(0xFFB1F0CE) else Color(0xFFFFDAD6))
                         .padding(horizontal = 12.dp, vertical = 4.dp),
                 ) {
                     Row(verticalAlignment = Alignment.CenterVertically) {
-                    Text(
-                        text = "\u2193",
-                        color = MaterialTheme.colorScheme.primary,
-                        style = MaterialTheme.typography.labelLarge,
-                    )
+                        Text(
+                            text = if (isUnderTarget) "\u2193" else "\u2191",
+                            color = if (isUnderTarget) MaterialTheme.colorScheme.primary else ErrorRed,
+                            style = MaterialTheme.typography.labelLarge,
+                        )
                         Spacer(Modifier.width(4.dp))
                         Text(
-                            text = "Down 5%",
+                            text = "${if (isUnderTarget) "Down" else "Up"} ${abs(diffPercent)}%",
                             style = MaterialTheme.typography.labelSmall,
-                            color = MaterialTheme.colorScheme.primary,
+                            color = if (isUnderTarget) MaterialTheme.colorScheme.primary else ErrorRed,
                         )
                     }
                 }
@@ -178,7 +314,7 @@ private fun WeeklySummaryCard() {
 
             Row(verticalAlignment = Alignment.Bottom) {
                 Text(
-                    text = "1,850",
+                    text = "${averageCalories.roundToInt()}",
                     style = MaterialTheme.typography.displayLarge,
                     color = MaterialTheme.colorScheme.primary,
                 )
@@ -190,7 +326,7 @@ private fun WeeklySummaryCard() {
             }
 
             Text(
-                text = "Daily Average vs 2,000 kcal Target",
+                text = "Daily Average vs ${targetCalories.roundToInt()} kcal Target",
                 style = MaterialTheme.typography.bodyLarge,
                 color = MaterialTheme.colorScheme.onSurfaceVariant,
             )
@@ -206,7 +342,7 @@ private fun WeeklySummaryCard() {
             ) {
                 Box(
                     modifier = Modifier
-                        .fillMaxWidth(0.925f)
+                        .fillMaxWidth(progress)
                         .height(8.dp)
                         .clip(RoundedCornerShape(4.dp))
                         .background(HealthGreen),
@@ -217,9 +353,10 @@ private fun WeeklySummaryCard() {
 }
 
 @Composable
-private fun DailyCalorieChart() {
-    val dayLabels = listOf("MON", "TUE", "WED", "THU", "FRI", "SAT", "SUN")
-    val barHeights = listOf(0.65f, 0.85f, 0.40f, 0.95f, 0.70f, 1.0f, 0.55f)
+private fun DailyCalorieChart(bars: List<DayBar>, targetCalories: Float) {
+    val maxValue = (bars.maxOfOrNull { it.calories } ?: 0f)
+        .coerceAtLeast(targetCalories)
+        .coerceAtLeast(1f)
 
     Box(
         modifier = Modifier
@@ -242,7 +379,7 @@ private fun DailyCalorieChart() {
                 horizontalArrangement = Arrangement.SpaceBetween,
                 verticalAlignment = Alignment.Bottom,
             ) {
-                dayLabels.forEachIndexed { index, label ->
+                bars.forEach { bar ->
                     Column(
                         horizontalAlignment = Alignment.CenterHorizontally,
                         modifier = Modifier.weight(1f),
@@ -250,13 +387,13 @@ private fun DailyCalorieChart() {
                         Box(
                             modifier = Modifier
                                 .fillMaxWidth()
-                                .height((barHeights[index] * 192).dp)
+                                .height(((bar.calories / maxValue).coerceIn(0f, 1f) * 192).dp)
                                 .clip(RoundedCornerShape(8.dp))
                                 .background(Color(0xFFB1F0CE)),
                         )
                         Spacer(Modifier.height(8.dp))
                         Text(
-                            text = label,
+                            text = bar.label,
                             style = MaterialTheme.typography.labelSmall,
                             color = MaterialTheme.colorScheme.onSurfaceVariant,
                             fontSize = 10.sp,
@@ -269,7 +406,14 @@ private fun DailyCalorieChart() {
 }
 
 @Composable
-private fun MacroRingChart() {
+private fun MacroRingChart(periodLabel: String, proteinRatio: Float, carbsRatio: Float, fatRatio: Float) {
+    val carbsSweep = carbsRatio * 360f
+    val proteinSweep = proteinRatio * 360f
+    val fatSweep = fatRatio * 360f
+    val carbsStart = -90f
+    val proteinStart = carbsStart + carbsSweep
+    val fatStart = proteinStart + proteinSweep
+
     Box(
         modifier = Modifier
             .fillMaxWidth()
@@ -306,53 +450,51 @@ private fun MacroRingChart() {
                         startAngle = -90f,
                         sweepAngle = 360f,
                         useCenter = false,
-                        topLeft = androidx.compose.ui.geometry.Offset(
-                            topLeft.x, topLeft.y
-                        ),
+                        topLeft = androidx.compose.ui.geometry.Offset(topLeft.x, topLeft.y),
                         size = arcSize,
                         style = androidx.compose.ui.graphics.drawscope.Stroke(strokeWidth),
                     )
 
-                    drawArc(
-                        color = HealthGreen,
-                        startAngle = -90f,
-                        sweepAngle = 180f,
-                        useCenter = false,
-                        topLeft = androidx.compose.ui.geometry.Offset(
-                            topLeft.x, topLeft.y
-                        ),
-                        size = arcSize,
-                        style = androidx.compose.ui.graphics.drawscope.Stroke(strokeWidth),
-                    )
+                    if (carbsSweep > 0f) {
+                        drawArc(
+                            color = HealthGreen,
+                            startAngle = carbsStart,
+                            sweepAngle = carbsSweep,
+                            useCenter = false,
+                            topLeft = androidx.compose.ui.geometry.Offset(topLeft.x, topLeft.y),
+                            size = arcSize,
+                            style = androidx.compose.ui.graphics.drawscope.Stroke(strokeWidth),
+                        )
+                    }
 
-                    drawArc(
-                        color = DataBlue,
-                        startAngle = 90f,
-                        sweepAngle = 108f,
-                        useCenter = false,
-                        topLeft = androidx.compose.ui.geometry.Offset(
-                            topLeft.x, topLeft.y
-                        ),
-                        size = arcSize,
-                        style = androidx.compose.ui.graphics.drawscope.Stroke(strokeWidth),
-                    )
+                    if (proteinSweep > 0f) {
+                        drawArc(
+                            color = DataBlue,
+                            startAngle = proteinStart,
+                            sweepAngle = proteinSweep,
+                            useCenter = false,
+                            topLeft = androidx.compose.ui.geometry.Offset(topLeft.x, topLeft.y),
+                            size = arcSize,
+                            style = androidx.compose.ui.graphics.drawscope.Stroke(strokeWidth),
+                        )
+                    }
 
-                    drawArc(
-                        color = EnergyOrange,
-                        startAngle = 198f,
-                        sweepAngle = 72f,
-                        useCenter = false,
-                        topLeft = androidx.compose.ui.geometry.Offset(
-                            topLeft.x, topLeft.y
-                        ),
-                        size = arcSize,
-                        style = androidx.compose.ui.graphics.drawscope.Stroke(strokeWidth),
-                    )
+                    if (fatSweep > 0f) {
+                        drawArc(
+                            color = EnergyOrange,
+                            startAngle = fatStart,
+                            sweepAngle = fatSweep,
+                            useCenter = false,
+                            topLeft = androidx.compose.ui.geometry.Offset(topLeft.x, topLeft.y),
+                            size = arcSize,
+                            style = androidx.compose.ui.graphics.drawscope.Stroke(strokeWidth),
+                        )
+                    }
                 }
 
                 Column(horizontalAlignment = Alignment.CenterHorizontally) {
                     Text(
-                        text = "Weekly",
+                        text = periodLabel,
                         style = MaterialTheme.typography.labelLarge,
                         color = MaterialTheme.colorScheme.onSurface,
                         fontWeight = FontWeight.Bold,
@@ -371,9 +513,9 @@ private fun MacroRingChart() {
                 modifier = Modifier.fillMaxWidth(),
                 horizontalArrangement = Arrangement.SpaceEvenly,
             ) {
-                LegendItem(color = HealthGreen, label = "CARBS", value = "50%")
-                LegendItem(color = DataBlue, label = "PROT", value = "30%")
-                LegendItem(color = EnergyOrange, label = "FAT", value = "20%")
+                LegendItem(color = HealthGreen, label = "CARBS", value = "${(carbsRatio * 100).roundToInt()}%")
+                LegendItem(color = DataBlue, label = "PROT", value = "${(proteinRatio * 100).roundToInt()}%")
+                LegendItem(color = EnergyOrange, label = "FAT", value = "${(fatRatio * 100).roundToInt()}%")
             }
         }
     }
@@ -409,7 +551,12 @@ private fun LegendItem(
 }
 
 @Composable
-private fun NutrientAchievementSection() {
+private fun NutrientAchievementSection(
+    averageProtein: Float,
+    averageCarbs: Float,
+    averageFat: Float,
+    targets: DailyTargets,
+) {
     Column(modifier = Modifier.padding(horizontal = 20.dp)) {
         Text(
             text = "Nutrient Achievement",
@@ -423,9 +570,9 @@ private fun NutrientAchievementSection() {
             iconBg = Color(0xFFE8F5E9),
             iconColor = HealthGreen,
             name = "Protein",
-            goal = "120g / day",
-            percentage = "84%",
-            progress = 0.84f,
+            goal = "${targets.protein.roundToInt()}g / day",
+            average = averageProtein,
+            target = targets.protein,
             barColor = DataBlue,
         )
         Spacer(Modifier.height(8.dp))
@@ -434,9 +581,9 @@ private fun NutrientAchievementSection() {
             iconBg = Color(0xFFE8F5E9),
             iconColor = HealthGreen,
             name = "Carbohydrates",
-            goal = "250g / day",
-            percentage = "95%",
-            progress = 0.95f,
+            goal = "${targets.carbs.roundToInt()}g / day",
+            average = averageCarbs,
+            target = targets.carbs,
             barColor = HealthGreen,
         )
         Spacer(Modifier.height(8.dp))
@@ -445,10 +592,10 @@ private fun NutrientAchievementSection() {
             iconBg = Color(0xFFFFF3E0),
             iconColor = EnergyOrange,
             name = "Fat",
-            goal = "65g / day",
-            percentage = "110%",
-            progress = 1f,
-            barColor = ErrorRed,
+            goal = "${targets.fat.roundToInt()}g / day",
+            average = averageFat,
+            target = targets.fat,
+            barColor = EnergyOrange,
         )
     }
 }
@@ -460,10 +607,17 @@ private fun NutrientCard(
     iconColor: Color,
     name: String,
     goal: String,
-    percentage: String,
-    progress: Float,
+    average: Float,
+    target: Float,
     barColor: Color,
 ) {
+    val rawPercent = if (target > 0f) (average / target) * 100 else 0f
+    val percentageText = "${rawPercent.roundToInt()}%"
+    val progress = (rawPercent / 100f).coerceIn(0f, 1f)
+    val isOverTarget = rawPercent > 100f
+    val displayBarColor = if (isOverTarget) ErrorRed else barColor
+    val displayPercentColor = if (isOverTarget) ErrorRed else barColor
+
     Box(
         modifier = Modifier
             .fillMaxWidth()
@@ -503,9 +657,9 @@ private fun NutrientCard(
                     }
                 }
                 Text(
-                    text = percentage,
+                    text = percentageText,
                     style = MaterialTheme.typography.labelLarge,
-                    color = barColor,
+                    color = displayPercentColor,
                 )
             }
             Spacer(Modifier.height(8.dp))
@@ -521,7 +675,7 @@ private fun NutrientCard(
                         .fillMaxWidth(progress)
                         .height(8.dp)
                         .clip(RoundedCornerShape(4.dp))
-                        .background(barColor),
+                        .background(displayBarColor),
                 )
             }
         }
@@ -529,7 +683,7 @@ private fun NutrientCard(
 }
 
 @Composable
-private fun MostConsumedSection() {
+private fun MostConsumedSection(items: List<MostConsumedItem>) {
     Column(modifier = Modifier.padding(horizontal = 20.dp)) {
         Text(
             text = "Most Consumed Food",
@@ -538,19 +692,25 @@ private fun MostConsumedSection() {
         )
         Spacer(Modifier.height(16.dp))
 
-        MostConsumedCard(
-            image = "https://lh3.googleusercontent.com/aida-public/AB6AXuAbf0CcDivgsEgxhz8ew7g6p8dVMZKEUXO5MWLjaUwcTpP4zi34NkPfKYKIdwrmT2MqQe1k8PoLpejAjf8-B_kXpm5AyYYty_fFLxbOmwmYdlnKS2GbsrlsBciyN7tD9cOw98wFm41pu6AW2DuFfZTPzksqXy1ybi3I8Pn6HOJCT0iJvTf8j4xcj9_M24E35kYHsL-E1lblvOsAQhu-TDOfZTZrkMjzyrIh_rnjsCQS5-8wxADYLtdaxjK6egMCUC7tLXWshnH3PoM",
-            name = "Nasi Putih",
-            frequency = "12 Times this week",
-            kcal = "240 kcal",
-        )
-        Spacer(Modifier.height(8.dp))
-        MostConsumedCard(
-            image = "https://lh3.googleusercontent.com/aida-public/AB6AXuCoLUyNf39dVMoWsNGCELeG5tXKuxrSLeq7E5DN9OgJBRuHtNxltEqTq0aE5zLot8HE0qQFUDQQBT9Wz1lJnevGk047-XbjMeIk8eakzHmD9pvPkHLG_yJcD2JBYi7WLfrE6ec3Rtl5U0Osls8Ie4410b7Avin2AP2Kg6nHAMLKyNOi3tjSbLutlYDzpQsyoLUiDYtRXILQh4iEcnrNA1T71M0REbmNXo-UGtOn73JjbUMNJRG5b72Sq9hBJD3G0uT6E9SumFdDIDE",
-            name = "Dada Ayam",
-            frequency = "8 Times this week",
-            kcal = "165 kcal",
-        )
+        if (items.isEmpty()) {
+            Text(
+                text = "Belum ada data. Yuk mulai catat makananmu di halaman Journal!",
+                style = MaterialTheme.typography.bodyLarge,
+                color = MaterialTheme.colorScheme.onSurfaceVariant,
+            )
+        } else {
+            items.forEachIndexed { index, item ->
+                MostConsumedCard(
+                    image = item.imageUrl,
+                    name = item.name,
+                    frequency = "${item.timesInPeriod}x periode ini",
+                    kcal = "${item.caloriesPerServe.roundToInt()} kcal",
+                )
+                if (index != items.lastIndex) {
+                    Spacer(Modifier.height(8.dp))
+                }
+            }
+        }
     }
 }
 

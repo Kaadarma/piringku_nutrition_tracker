@@ -37,6 +37,19 @@ class JournalRepository private constructor(context: Context) {
         }
     }
 
+    /**
+     * Ambil semua entry di antara [startDate] (inklusif) dan [endDateExclusive] (eksklusif).
+     * Dipakai StatsScreen untuk hitung rata-rata mingguan/bulanan, rasio makro, dan makanan
+     * yang paling sering dimakan pada periode tersebut.
+     */
+    fun getEntriesInRange(startDate: LocalDate, endDateExclusive: LocalDate): Flow<List<JournalEntry>> {
+        val start = startDate.atStartOfDay(ZoneOffset.UTC).toInstant().toEpochMilli()
+        val end = endDateExclusive.atStartOfDay(ZoneOffset.UTC).toInstant().toEpochMilli()
+        return journalDao.getEntriesByDateRange(start, end).map { entities ->
+            entities.map { it.toJournalEntry() }
+        }
+    }
+
     suspend fun addEntry(entry: JournalEntry): Long {
         return journalDao.insertEntry(entry.toEntity())
     }
