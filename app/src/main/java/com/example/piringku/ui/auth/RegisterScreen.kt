@@ -23,11 +23,14 @@ import androidx.compose.material.icons.filled.Email
 import androidx.compose.material.icons.filled.Lock
 import androidx.compose.material.icons.filled.Person
 import androidx.compose.material.icons.filled.Restaurant
+import androidx.compose.material.icons.filled.Visibility
+import androidx.compose.material.icons.filled.VisibilityOff
 import androidx.compose.material3.Button
 import androidx.compose.material3.ButtonDefaults
 import androidx.compose.material3.Checkbox
 import androidx.compose.material3.CheckboxDefaults
 import androidx.compose.material3.Icon
+import androidx.compose.material3.IconButton
 import androidx.compose.material3.MaterialTheme
 import androidx.compose.material3.OutlinedTextField
 import androidx.compose.material3.OutlinedTextFieldDefaults
@@ -72,6 +75,8 @@ fun RegisterScreen(
     var confirmPassword by remember { mutableStateOf("") }
     var agreeTerms by remember { mutableStateOf(false) }
     var error by remember { mutableStateOf<String?>(null) }
+    var passwordVisible by remember { mutableStateOf(false) }
+    var confirmPasswordVisible by remember { mutableStateOf(false) }
 
     Column(
         modifier = Modifier
@@ -199,15 +204,57 @@ fun RegisterScreen(
                     onValueChange = { password = it; error = null },
                     placeholder = { Text("••••••••") },
                     trailingIcon = {
-                        Icon(Icons.Default.Lock, contentDescription = null)
+                        IconButton(onClick = { passwordVisible = !passwordVisible }) {
+                            Icon(
+                                if (passwordVisible) Icons.Default.VisibilityOff else Icons.Default.Visibility,
+                                contentDescription = if (passwordVisible) "Sembunyikan password" else "Tampilkan password",
+                            )
+                        }
                     },
                     modifier = Modifier.fillMaxWidth(),
                     shape = RoundedCornerShape(12.dp),
-                    visualTransformation = PasswordVisualTransformation(),
+                    visualTransformation = if (passwordVisible) androidx.compose.ui.text.input.VisualTransformation.None else PasswordVisualTransformation(),
                     singleLine = true,
                     keyboardOptions = androidx.compose.foundation.text.KeyboardOptions(
                         keyboardType = KeyboardType.Password,
                         imeAction = ImeAction.Next,
+                    ),
+                    colors = OutlinedTextFieldDefaults.colors(
+                        focusedBorderColor = MaterialTheme.colorScheme.primary,
+                        unfocusedBorderColor = MaterialTheme.colorScheme.outlineVariant,
+                    ),
+                )
+            }
+
+            Spacer(Modifier.height(16.dp))
+
+            Column {
+                Text(
+                    text = "KONFIRMASI PASSWORD",
+                    style = MaterialTheme.typography.labelSmall,
+                    color = MaterialTheme.colorScheme.onSurfaceVariant,
+                    letterSpacing = 0.5.sp,
+                    modifier = Modifier.padding(start = 4.dp, bottom = 8.dp),
+                )
+                OutlinedTextField(
+                    value = confirmPassword,
+                    onValueChange = { confirmPassword = it; error = null },
+                    placeholder = { Text("••••••••") },
+                    trailingIcon = {
+                        IconButton(onClick = { confirmPasswordVisible = !confirmPasswordVisible }) {
+                            Icon(
+                                if (confirmPasswordVisible) Icons.Default.VisibilityOff else Icons.Default.Visibility,
+                                contentDescription = if (confirmPasswordVisible) "Sembunyikan password" else "Tampilkan password",
+                            )
+                        }
+                    },
+                    modifier = Modifier.fillMaxWidth(),
+                    shape = RoundedCornerShape(12.dp),
+                    visualTransformation = if (confirmPasswordVisible) androidx.compose.ui.text.input.VisualTransformation.None else PasswordVisualTransformation(),
+                    singleLine = true,
+                    keyboardOptions = androidx.compose.foundation.text.KeyboardOptions(
+                        keyboardType = KeyboardType.Password,
+                        imeAction = ImeAction.Done,
                     ),
                     colors = OutlinedTextFieldDefaults.colors(
                         focusedBorderColor = MaterialTheme.colorScheme.primary,
@@ -261,14 +308,14 @@ fun RegisterScreen(
             Button(
                 onClick = {
                     when {
-                        name.isBlank() || email.isBlank() || password.isBlank() -> {
+                        name.isBlank() || email.isBlank() || password.isBlank() || confirmPassword.isBlank() -> {
                             error = "Semua field harus diisi"
                         }
                         password.length < 6 -> {
                             error = "Password minimal 6 karakter"
                         }
-                        password.length < 6 -> {
-                            error = "Password minimal 6 karakter"
+                        confirmPassword != password -> {
+                            error = "Konfirmasi password tidak sesuai"
                         }
                         !agreeTerms -> {
                             error = "Setujui Syarat & Ketentuan"
