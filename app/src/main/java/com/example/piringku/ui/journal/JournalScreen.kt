@@ -68,6 +68,7 @@ import com.example.piringku.model.MealType
 import com.example.piringku.ui.theme.BorderSubtle
 import com.example.piringku.ui.theme.DataBlue
 import com.example.piringku.ui.theme.EnergyOrange
+import com.example.piringku.ui.theme.ErrorRed
 import com.example.piringku.ui.theme.HealthGreen
 import kotlinx.coroutines.launch
 import java.time.LocalDate
@@ -585,18 +586,19 @@ private fun HeroSection(
             modifier = Modifier.size(192.dp),
             contentAlignment = Alignment.Center,
         ) {
+            val exceeded = remainingCalories < 0
             CircularProgressIndicator(
                 progress = { calorieProgress },
                 modifier = Modifier.size(192.dp),
                 strokeWidth = 8.dp,
                 trackColor = Color(0xFFE1E3DF),
-                color = HealthGreen,
+                color = if (exceeded) ErrorRed else HealthGreen,
             )
             Column(horizontalAlignment = Alignment.CenterHorizontally) {
                 Text(
                     text = "%,d".format(remainingCalories),
                     style = MaterialTheme.typography.displayLarge,
-                    color = MaterialTheme.colorScheme.onSurface,
+                    color = if (exceeded) ErrorRed else MaterialTheme.colorScheme.onSurface,
                 )
                 Text(
                     text = "Sisa Kalori",
