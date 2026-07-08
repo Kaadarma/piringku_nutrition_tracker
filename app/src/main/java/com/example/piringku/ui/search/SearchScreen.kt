@@ -28,7 +28,6 @@ import androidx.compose.material.icons.Icons
 import androidx.compose.material.icons.automirrored.filled.ArrowBack
 import androidx.compose.material.icons.filled.Delete
 import androidx.compose.material.icons.filled.Search
-import androidx.compose.material.icons.outlined.QrCodeScanner
 import androidx.compose.material.icons.outlined.Restaurant
 import androidx.compose.material3.Icon
 import androidx.compose.material3.IconButton
@@ -64,12 +63,11 @@ import kotlinx.coroutines.Dispatchers
 import kotlinx.coroutines.launch
 import kotlinx.coroutines.withContext
 
-private val tabs = listOf("Pencarian", "Riwayat Saya", "Barcode Scanner")
+private val tabs = listOf("Pencarian", "Riwayat Saya")
 
 @Composable
 fun SearchScreen(
     onBack: () -> Unit = {},
-    onNavigateToBarcode: () -> Unit = {},
     onFoodSelected: (FoodItem) -> Unit = {},
 ) {
     val context = LocalContext.current
@@ -114,7 +112,6 @@ fun SearchScreen(
                 }
             },
             onBack = onBack,
-            onNavigateToBarcode = onNavigateToBarcode,
         )
 
         Spacer(modifier = Modifier.height(12.dp))
@@ -202,9 +199,7 @@ fun SearchScreen(
                 )
             }
 
-            2 -> {
-                BarcodeContent(onNavigateToBarcode = onNavigateToBarcode)
-            }
+
         }
     }
 }
@@ -214,7 +209,6 @@ private fun SearchBar(
     query: String,
     onQueryChange: (String) -> Unit,
     onBack: () -> Unit,
-    onNavigateToBarcode: () -> Unit,
 ) {
     Row(
         modifier = Modifier
@@ -261,15 +255,6 @@ private fun SearchBar(
             singleLine = true,
         )
 
-        Spacer(modifier = Modifier.width(4.dp))
-
-        IconButton(onClick = onNavigateToBarcode) {
-            Icon(
-                Icons.Outlined.QrCodeScanner,
-                contentDescription = "Scan Barcode",
-                tint = MaterialTheme.colorScheme.onSurfaceVariant,
-            )
-        }
     }
 }
 
@@ -640,28 +625,3 @@ private fun HistoryContent(
     }
 }
 
-@Composable
-private fun BarcodeContent(onNavigateToBarcode: () -> Unit) {
-    Box(
-        modifier = Modifier
-            .fillMaxSize()
-            .clickable(onClick = onNavigateToBarcode),
-        contentAlignment = Alignment.Center,
-    ) {
-        Column(horizontalAlignment = Alignment.CenterHorizontally) {
-            Icon(
-                Icons.Outlined.QrCodeScanner,
-                contentDescription = null,
-                tint = MaterialTheme.colorScheme.onSurfaceVariant,
-                modifier = Modifier.size(48.dp),
-            )
-            Spacer(modifier = Modifier.height(12.dp))
-            Text(
-                text = "Buka Barcode Scanner",
-                style = MaterialTheme.typography.bodyLarge,
-                color = MaterialTheme.colorScheme.onSurfaceVariant,
-                textAlign = TextAlign.Center,
-            )
-        }
-    }
-}

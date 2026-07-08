@@ -26,7 +26,6 @@ import androidx.navigation.compose.rememberNavController
 import com.example.piringku.ui.auth.DataDiriScreen
 import com.example.piringku.ui.auth.LoginScreen
 import com.example.piringku.ui.auth.RegisterScreen
-import com.example.piringku.ui.barcode.BarcodeScanner
 import com.example.piringku.ui.journal.JournalScreen
 import com.example.piringku.ui.profile.ProfilScreen
 import com.example.piringku.ui.search.SearchScreen
@@ -60,7 +59,6 @@ sealed class Screen(val route: String, val title: String = "", val icon: ImageVe
     object Stats : Screen("stats", "Stats", Icons.Default.Share)
     object Cari : Screen("cari", "Cari", Icons.Default.Search)
     object Profile : Screen("profile", "Profile", Icons.Default.AccountCircle)
-    object Barcode : Screen("barcode")
     object ProgresGoals : Screen("progres_goals")
     object EditDataDiri : Screen("edit_data_diri")
     object ReminderSettings : Screen("reminder_settings")
@@ -68,7 +66,7 @@ sealed class Screen(val route: String, val title: String = "", val icon: ImageVe
 
 private val bottomNavItems = listOf(Screen.Journal, Screen.Stats, Screen.Cari, Screen.Profile)
 private val authRoutes = setOf(Screen.Splash.route, Screen.Login.route, Screen.Register.route, Screen.DataDiri.route)
-private val fullscreenRoutes = setOf(Screen.Barcode.route, Screen.ProgresGoals.route, Screen.EditDataDiri.route, Screen.ReminderSettings.route)
+private val fullscreenRoutes = setOf(Screen.ProgresGoals.route, Screen.EditDataDiri.route, Screen.ReminderSettings.route)
 
 @Composable
 fun PiringkuApp() {
@@ -140,7 +138,6 @@ fun PiringkuApp() {
             composable(Screen.Cari.route) {
                 SearchScreen(
                     onBack = { navController.popBackStack() },
-                    onNavigateToBarcode = { navController.navigate(Screen.Barcode.route) },
                 )
             }
             composable(Screen.Profile.route) {
@@ -153,13 +150,6 @@ fun PiringkuApp() {
                             popUpTo(0) { inclusive = true }
                         }
                     },
-                )
-            }
-            composable(Screen.Barcode.route) {
-                BarcodeScanner(
-                    onBack = { navController.popBackStack() },
-                    onBarcodeScanned = { navController.popBackStack() },
-                    onManualSearch = { navController.popBackStack() },
                 )
             }
             composable(Screen.ProgresGoals.route) {
