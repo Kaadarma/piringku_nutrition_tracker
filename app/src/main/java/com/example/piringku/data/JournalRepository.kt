@@ -70,6 +70,14 @@ class JournalRepository private constructor(context: Context) {
         return journalDao.getEntryById(id, userId)?.toJournalEntry()
     }
 
+    fun getCaloriesInRange(startDate: LocalDate, endDateExclusive: LocalDate, userId: Long): Flow<Float> {
+        val start = startDate.atStartOfDay(ZoneOffset.UTC).toInstant().toEpochMilli()
+        val end = endDateExclusive.atStartOfDay(ZoneOffset.UTC).toInstant().toEpochMilli()
+        return journalDao.getEntriesByDateRange(userId, start, end).map { entities ->
+            entities.sumOf { it.calories.toDouble() }.toFloat()
+        }
+    }
+
     fun createEntryFromFood(
         userId: Long,
         foodId: Int,

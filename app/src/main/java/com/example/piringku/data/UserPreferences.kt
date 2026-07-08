@@ -10,9 +10,11 @@ import androidx.datastore.preferences.core.intPreferencesKey
 import androidx.datastore.preferences.core.longPreferencesKey
 import androidx.datastore.preferences.core.stringPreferencesKey
 import androidx.datastore.preferences.preferencesDataStore
+import com.google.gson.Gson
 import kotlinx.coroutines.flow.Flow
 import kotlinx.coroutines.flow.first
 import kotlinx.coroutines.flow.map
+import kotlinx.coroutines.runBlocking
 
 private val Context.dataStore: DataStore<Preferences> by preferencesDataStore(name = "user_prefs")
 
@@ -47,6 +49,11 @@ class UserPreferences(private val context: Context) {
         val carbs: Float = 250f,
     )
 
+    data class WeightEntry(
+        val date: String,
+        val weight: Float,
+    )
+
     private val IS_LOGGED_IN = booleanPreferencesKey("is_logged_in")
     private val NAME = stringPreferencesKey("name")
     private val EMAIL = stringPreferencesKey("email")
@@ -60,6 +67,7 @@ class UserPreferences(private val context: Context) {
     private val GOAL_PROTEIN = floatPreferencesKey("goal_protein")
     private val GOAL_FAT = floatPreferencesKey("goal_fat")
     private val GOAL_CARBS = floatPreferencesKey("goal_carbs")
+    private val WEIGHT_HISTORY = stringPreferencesKey("weight_history")
 
     val userData: Flow<UserData> = context.dataStore.data.map { prefs ->
         UserData(
@@ -113,6 +121,21 @@ class UserPreferences(private val context: Context) {
             prefs[GOAL_PROTEIN] = protein
             prefs[GOAL_FAT] = fat
             prefs[GOAL_CARBS] = carbs
+        }
+    }
+
+    fun getWeightHistory(): List<WeightEntry> {
+        val json = runBlocking { context.dataStore.data.first()[WEIGHT_HISTORY] ?: "[]" }
+        return try {
+            Gson().fromJson(json, Array<WeightEntry>::class.java).toList()
+        } catch (_: Exception) { emptyList() }
+    }
+
+    suspend fun saveWeightEntry(entry: WeightEntry) {
+        val history = getWeightHistory().toMutableList()
+        history.add(entry)
+        context.dataStore.edit { prefs ->
+            prefs[WEIGHT_HISTORY] = Gson().toJson(history)
         }
     }
 

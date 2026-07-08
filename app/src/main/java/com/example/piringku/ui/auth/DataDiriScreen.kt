@@ -63,6 +63,7 @@ import com.example.piringku.util.ProfilePictureManager
 import kotlinx.coroutines.Dispatchers
 import kotlinx.coroutines.launch
 import kotlinx.coroutines.withContext
+import kotlinx.coroutines.withTimeout
 @OptIn(ExperimentalMaterial3Api::class)
 @Composable
 fun DataDiriScreen(
@@ -123,6 +124,7 @@ fun DataDiriScreen(
         "Sangat aktif (Setiap hari)" to "sangat_aktif",
     )
     var error by remember { mutableStateOf<String?>(null) }
+    var isLoading by remember { mutableStateOf(false) }
 
     Column(
         modifier = Modifier
@@ -473,33 +475,57 @@ fun DataDiriScreen(
                 )
                 .padding(horizontal = 20.dp, vertical = 16.dp),
         ) {
+            if (error != null) {
+                Text(
+                    text = error!!,
+                    color = MaterialTheme.colorScheme.error,
+                    style = MaterialTheme.typography.bodySmall,
+                    modifier = Modifier.padding(bottom = 8.dp),
+                )
+            }
             Button(
                 onClick = {
+                    if (isLoading) return@Button
                     when {
                         name.isBlank() -> error = "Nama harus diisi"
-                        height.toFloatOrNull() == null -> error = "Tinggi tidak valid"
-                        weight.toFloatOrNull() == null -> error = "Berat tidak valid"
+                        height.replace(",", ".").toFloatOrNull() == null -> error = "Tinggi tidak valid"
+                        weight.replace(",", ".").toFloatOrNull() == null -> error = "Berat tidak valid"
                         else -> {
+                            error = null
+                            isLoading = true
                             val activityKey = activityLevels.firstOrNull { it.first == selectedActivity }?.second
                                 ?: "cukup_aktif"
                             scope.launch(Dispatchers.IO) {
-                                val currentEmail = userRepo.getUserSnapshot(userId).email
-                                userRepo.saveUser(
-                                    userId = userId,
-                                    name = name,
-                                    email = currentEmail,
-                                    height = height.toIntOrNull() ?: 0,
-                                    weight = weight.toFloatOrNull() ?: 0f,
-                                    age = age.toIntOrNull() ?: 0,
-                                    gender = selectedGender,
-                                    activityLevel = activityKey,
-                                    targetWeight = targetWeight.toFloatOrNull() ?: 68f,
-                                )
-                                withContext(Dispatchers.Main) { onSaved() }
+                                try {
+                                    withTimeout(10000) {
+                                        val currentEmail = userRepo.getUserSnapshot(userId).email
+                                        userRepo.saveUser(
+                                            userId = userId,
+                                            name = name,
+                                            email = currentEmail,
+                                            height = height.replace(",", ".").toIntOrNull() ?: 0,
+                                            weight = weight.replace(",", ".").toFloatOrNull() ?: 0f,
+                                            age = age.toIntOrNull() ?: 0,
+                                            gender = selectedGender,
+                                            activityLevel = activityKey,
+                                            targetWeight = targetWeight.replace(",", ".").toFloatOrNull() ?: 68f,
+                                        )
+                                        withContext(Dispatchers.Main) {
+                                            onSaved()
+                                        }
+                                    }
+                                } catch (e: kotlinx.coroutines.TimeoutCancellationException) {
+                                    withContext(Dispatchers.Main) { error = "Waktu habis — coba lagi" }
+                                } catch (e: Exception) {
+                                    withContext(Dispatchers.Main) { error = "Gagal: ${e.message}" }
+                                } finally {
+                                    withContext(Dispatchers.Main) { isLoading = false }
+                                }
                             }
                         }
                     }
                 },
+                enabled = !isLoading,
                 modifier = Modifier
                     .fillMaxWidth()
                     .height(56.dp),
@@ -508,10 +534,18 @@ fun DataDiriScreen(
                     containerColor = MaterialTheme.colorScheme.primaryContainer,
                 ),
             ) {
-                Text(
-                    text = "Simpan Perubahan",
-                    style = MaterialTheme.typography.labelLarge,
-                )
+                if (isLoading) {
+                    androidx.compose.material3.CircularProgressIndicator(
+                        modifier = Modifier.size(24.dp),
+                        color = MaterialTheme.colorScheme.onPrimaryContainer,
+                        strokeWidth = 2.dp,
+                    )
+                } else {
+                    Text(
+                        text = "Simpan Perubahan",
+                        style = MaterialTheme.typography.labelLarge,
+                    )
+                }
             }
         }
     }
