@@ -103,7 +103,7 @@ fun ProfilScreen(
         }
     }
 
-    LaunchedEffect(ProfilePictureManager.photoVersion) {
+    LaunchedEffect(userId, ProfilePictureManager.photoVersion) {
         if (userId != 0L) {
             hasProfilePicture = ProfilePictureManager.exists(context, userId)
             profilePictureUri = ProfilePictureManager.getUri(context, userId)

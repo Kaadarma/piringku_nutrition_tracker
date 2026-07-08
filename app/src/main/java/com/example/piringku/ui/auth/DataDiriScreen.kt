@@ -63,8 +63,6 @@ import com.example.piringku.util.ProfilePictureManager
 import kotlinx.coroutines.Dispatchers
 import kotlinx.coroutines.launch
 import kotlinx.coroutines.withContext
-import androidx.compose.runtime.LaunchedEffect
-
 @OptIn(ExperimentalMaterial3Api::class)
 @Composable
 fun DataDiriScreen(
@@ -90,13 +88,6 @@ fun DataDiriScreen(
     var hasProfilePicture by remember { mutableStateOf(false) }
     var profilePictureUri by remember { mutableStateOf<Uri?>(null) }
 
-    LaunchedEffect(ProfilePictureManager.photoVersion) {
-        if (userId != 0L) {
-            hasProfilePicture = ProfilePictureManager.exists(context, userId)
-            profilePictureUri = ProfilePictureManager.getUri(context, userId)
-        }
-    }
-
     LaunchedEffect(Unit) {
         userId = prefs.getUserId()
         val profile = withContext(Dispatchers.IO) { userRepo.getUserSnapshot(userId) }
@@ -117,6 +108,14 @@ fun DataDiriScreen(
         }
         dataLoaded = true
     }
+
+    LaunchedEffect(userId, ProfilePictureManager.photoVersion) {
+        if (userId != 0L) {
+            hasProfilePicture = ProfilePictureManager.exists(context, userId)
+            profilePictureUri = ProfilePictureManager.getUri(context, userId)
+        }
+    }
+
     val activityLevels = listOf(
         "Tidak aktif (Banyak duduk)" to "tidak_aktif",
         "Sedikit aktif (1-2 hari/minggu)" to "sedikit_aktif",
