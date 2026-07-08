@@ -34,6 +34,7 @@ import androidx.compose.runtime.getValue
 import androidx.compose.runtime.mutableFloatStateOf
 import androidx.compose.runtime.mutableStateOf
 import androidx.compose.runtime.remember
+import androidx.compose.runtime.rememberCoroutineScope
 import androidx.compose.runtime.setValue
 import androidx.compose.ui.Alignment
 import androidx.compose.ui.Modifier
@@ -53,15 +54,17 @@ import com.example.piringku.ui.theme.BorderSubtle
 import com.example.piringku.ui.theme.DataBlue
 import com.example.piringku.ui.theme.HealthGreen
 import com.example.piringku.ui.theme.EnergyOrange
-import kotlinx.coroutines.CoroutineScope
 import kotlinx.coroutines.Dispatchers
 import kotlinx.coroutines.launch
 import kotlinx.coroutines.withContext
+import java.time.Instant
+import java.time.LocalDate
 
 @Composable
 fun FoodDetailSheet(
     food: FoodItem,
     userId: Long,
+    entryDate: LocalDate = LocalDate.now(),
     onDismiss: () -> Unit,
     onAdded: () -> Unit,
     onBack: () -> Unit = {},
@@ -72,6 +75,7 @@ fun FoodDetailSheet(
     var portion by remember { mutableFloatStateOf(1f) }
     var selectedMeal by remember { mutableStateOf(initialMealType) }
     var mealExpanded by remember { mutableStateOf(false) }
+    val scope = rememberCoroutineScope()
 
     val ratio = portion
     val scaledCalories = food.calories * ratio
@@ -292,7 +296,7 @@ fun FoodDetailSheet(
 
         Button(
             onClick = {
-                CoroutineScope(Dispatchers.IO).launch {
+                scope.launch(Dispatchers.IO) {
                     repository.createEntryFromFood(
                         userId = userId,
                         foodId = food.id,
@@ -304,6 +308,7 @@ fun FoodDetailSheet(
                         carbs = food.carbs,
                         mealType = selectedMeal,
                         imageUrl = food.image,
+                        timestamp = entryDate.atStartOfDay(java.time.ZoneOffset.UTC).toInstant(),
                     ).let { repository.addEntry(it) }
                     withContext(Dispatchers.Main) {
                         onAdded()

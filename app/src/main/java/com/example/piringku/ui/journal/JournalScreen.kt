@@ -15,6 +15,7 @@ import androidx.compose.foundation.layout.padding
 import androidx.compose.foundation.layout.size
 import androidx.compose.foundation.layout.width
 import androidx.compose.foundation.lazy.LazyColumn
+import androidx.compose.foundation.lazy.items
 import androidx.compose.foundation.shape.CircleShape
 import androidx.compose.foundation.shape.RoundedCornerShape
 import androidx.compose.material.icons.Icons
@@ -42,6 +43,7 @@ import androidx.compose.material3.rememberDatePickerState
 import androidx.compose.material3.rememberModalBottomSheetState
 import androidx.compose.runtime.Composable
 import androidx.compose.runtime.collectAsState
+import androidx.compose.runtime.derivedStateOf
 import androidx.compose.runtime.getValue
 import androidx.compose.runtime.mutableLongStateOf
 import androidx.compose.runtime.mutableStateOf
@@ -90,10 +92,18 @@ fun JournalScreen() {
     val today = LocalDate.now()
     var selectedDate by remember { mutableStateOf(today) }
     var showDatePicker by remember { mutableStateOf(false) }
-    val datePickerState = rememberDatePickerState()
 
     val entries by repository.getEntriesByDate(selectedDate, userId).collectAsState(initial = emptyList())
-    val nutrition by repository.getDailyNutrition(selectedDate, userId).collectAsState(initial = com.example.piringku.model.DailyNutrition())
+    val nutrition by remember(entries) {
+        derivedStateOf {
+            com.example.piringku.model.DailyNutrition(
+                calories = entries.sumOf { it.calories.toDouble() }.toFloat(),
+                protein = entries.sumOf { it.protein.toDouble() }.toFloat(),
+                fat = entries.sumOf { it.fat.toDouble() }.toFloat(),
+                carbs = entries.sumOf { it.carbs.toDouble() }.toFloat(),
+            )
+        }
+    }
 
     var showAddSheet by remember { mutableStateOf(false) }
     var selectedEntryId by remember { mutableLongStateOf(-1L) }
@@ -104,6 +114,14 @@ fun JournalScreen() {
     var targets by remember { mutableStateOf(targetPrefs.getTargets()) }
     var showTargetSheet by remember { mutableStateOf(false) }
 
+    LaunchedEffect(selectedDate) {
+        targets = if (selectedDate == today) {
+            targetPrefs.getTargets()
+        } else {
+            com.example.piringku.data.DailyTargets()
+        }
+    }
+
     val showEditSheet = selectedEntryId > 0L
     val targetCalories = targets.calories
     val targetProtein = targets.protein
@@ -113,9 +131,11 @@ fun JournalScreen() {
     val remainingCalories = (targetCalories - nutrition.calories).coerceAtLeast(0f)
     val calorieProgress = if (targetCalories > 0f) (nutrition.calories / targetCalories).coerceAtMost(1f) else 0f
 
-    val entryToEdit = if (showEditSheet) {
-        entries.find { it.id == selectedEntryId }
-    } else null
+    val entryToEdit by remember {
+        derivedStateOf {
+            if (selectedEntryId > 0L) entries.find { it.id == selectedEntryId } else null
+        }
+    }
 
     Scaffold(
         floatingActionButton = {
@@ -165,18 +185,31 @@ fun JournalScreen() {
                 val mealEntries = entriesByMeal[mealType] ?: emptyList()
                 val mealCalories = mealEntries.sumOf { it.calories.toDouble() }.toFloat()
 
-                item {
-                    MealSection(
-                        title = mealType.displayName,
-                        calories = mealCalories,
-                        entries = mealEntries,
-                        isEmpty = mealEntries.isEmpty(),
-                        onEntryClick = { id -> selectedEntryId = id },
-                        onAddClick = {
-                            addSheetMealType = mealType
-                            showAddSheet = true
-                        },
-                    )
+                if (mealEntries.isEmpty()) {
+                    item(key = "empty_${mealType}") {
+                        MealSection(
+                            title = mealType.displayName,
+                            calories = mealCalories,
+                            entries = mealEntries,
+                            isEmpty = true,
+                            onEntryClick = {},
+                            onAddClick = {
+                                addSheetMealType = mealType
+                                showAddSheet = true
+                            },
+                        )
+                    }
+                } else {
+                    item(key = "header_${mealType}") {
+                        MealHeader(title = mealType.displayName, calories = mealCalories)
+                    }
+                    items(items = mealEntries, key = { entry -> entry.id }) { entry ->
+                        JournalEntryCard(
+                            entry = entry,
+                            onClick = { selectedEntryId = entry.id },
+                            modifier = Modifier.padding(horizontal = 20.dp),
+                        )
+                    }
                 }
                 item { Spacer(Modifier.height(12.dp)) }
             }
@@ -194,6 +227,7 @@ fun JournalScreen() {
                 FoodDetailSheet(
                     food = selectedFood!!,
                     userId = userId,
+                    entryDate = selectedDate,
                     onDismiss = { showAddSheet = false; selectedFood = null },
                     onAdded = {
                         showAddSheet = false
@@ -214,11 +248,17 @@ fun JournalScreen() {
     }
 
     if (showDatePicker) {
+        val dpState = rememberDatePickerState(
+            initialSelectedDateMillis = selectedDate
+                .atStartOfDay(java.time.ZoneOffset.UTC)
+                .toInstant()
+                .toEpochMilli(),
+        )
         DatePickerDialog(
             onDismissRequest = { showDatePicker = false },
             confirmButton = {
                 TextButton(onClick = {
-                    datePickerState.selectedDateMillis?.let { millis ->
+                    dpState.selectedDateMillis?.let { millis ->
                         selectedDate = java.time.Instant.ofEpochMilli(millis)
                             .atZone(java.time.ZoneOffset.UTC)
                             .toLocalDate()
@@ -230,7 +270,7 @@ fun JournalScreen() {
                 TextButton(onClick = { showDatePicker = false }) { Text("Batal") }
             },
         ) {
-            DatePicker(state = datePickerState)
+            DatePicker(state = dpState)
         }
     }
 
@@ -246,13 +286,14 @@ fun JournalScreen() {
         )
     }
 
-    if (showEditSheet && entryToEdit != null) {
+    val editEntry = entryToEdit
+    if (showEditSheet && editEntry != null) {
         ModalBottomSheet(
             onDismissRequest = { selectedEntryId = -1 },
             sheetState = editSheetState,
         ) {
             UpdateDeleteSheet(
-                entry = entryToEdit,
+                entry = editEntry,
                 onDismiss = { selectedEntryId = -1 },
                 onUpdated = { selectedEntryId = -1 },
                 onDeleted = { selectedEntryId = -1 },
@@ -619,6 +660,32 @@ private fun MacroLinearBar(
 }
 
 @Composable
+private fun MealHeader(
+    title: String,
+    calories: Float,
+) {
+    Row(
+        modifier = Modifier
+            .padding(horizontal = 20.dp)
+            .fillMaxWidth(),
+        horizontalArrangement = Arrangement.SpaceBetween,
+        verticalAlignment = Alignment.CenterVertically,
+    ) {
+        Text(
+            text = title,
+            style = MaterialTheme.typography.labelLarge,
+            color = MaterialTheme.colorScheme.onSurface,
+        )
+        Text(
+            text = "%.0f kkal".format(calories),
+            style = MaterialTheme.typography.labelSmall,
+            color = MaterialTheme.colorScheme.onSurfaceVariant,
+        )
+    }
+    Spacer(Modifier.height(8.dp))
+}
+
+@Composable
 private fun MealSection(
     title: String,
     calories: Float,
@@ -627,58 +694,33 @@ private fun MealSection(
     onEntryClick: (Long) -> Unit,
     onAddClick: () -> Unit,
 ) {
-    Column(modifier = Modifier.padding(horizontal = 20.dp)) {
-        Row(
-            modifier = Modifier.fillMaxWidth(),
-            horizontalArrangement = Arrangement.SpaceBetween,
-            verticalAlignment = Alignment.CenterVertically,
-        ) {
-            Text(
-                text = title,
-                style = MaterialTheme.typography.labelLarge,
-                color = MaterialTheme.colorScheme.onSurface,
-            )
-            Text(
-                text = "%.0f kkal".format(calories),
-                style = MaterialTheme.typography.labelSmall,
-                color = MaterialTheme.colorScheme.onSurfaceVariant,
-            )
-        }
-        Spacer(Modifier.height(8.dp))
+    MealHeader(title = title, calories = calories)
 
-        if (isEmpty) {
-            Box(
-                modifier = Modifier
-                    .fillMaxWidth()
-                    .clip(RoundedCornerShape(12.dp))
-                    .border(1.dp, MaterialTheme.colorScheme.outlineVariant, RoundedCornerShape(12.dp))
-                    .background(MaterialTheme.colorScheme.surfaceContainerLow)
-                    .clickable { onAddClick() }
-                    .padding(16.dp),
-                contentAlignment = Alignment.Center,
-            ) {
-                Row(verticalAlignment = Alignment.CenterVertically) {
-                    Icon(
-                        imageVector = Icons.Default.Add,
-                        contentDescription = null,
-                        tint = MaterialTheme.colorScheme.onSurfaceVariant,
-                        modifier = Modifier.size(20.dp),
-                    )
-                    Spacer(Modifier.width(8.dp))
-                    Text(
-                        text = "Tambah Menu",
-                        style = MaterialTheme.typography.labelLarge,
-                        color = MaterialTheme.colorScheme.onSurfaceVariant,
-                    )
-                }
-            }
-        } else {
-            entries.forEach { entry ->
-                JournalEntryCard(
-                    entry = entry,
-                    onClick = { onEntryClick(entry.id) },
+    if (isEmpty) {
+        Box(
+            modifier = Modifier
+                .padding(horizontal = 20.dp)
+                .fillMaxWidth()
+                .clip(RoundedCornerShape(12.dp))
+                .border(1.dp, MaterialTheme.colorScheme.outlineVariant, RoundedCornerShape(12.dp))
+                .background(MaterialTheme.colorScheme.surfaceContainerLow)
+                .clickable { onAddClick() }
+                .padding(16.dp),
+            contentAlignment = Alignment.Center,
+        ) {
+            Row(verticalAlignment = Alignment.CenterVertically) {
+                Icon(
+                    imageVector = Icons.Default.Add,
+                    contentDescription = null,
+                    tint = MaterialTheme.colorScheme.onSurfaceVariant,
+                    modifier = Modifier.size(20.dp),
                 )
-                Spacer(Modifier.height(8.dp))
+                Spacer(Modifier.width(8.dp))
+                Text(
+                    text = "Tambah Menu",
+                    style = MaterialTheme.typography.labelLarge,
+                    color = MaterialTheme.colorScheme.onSurfaceVariant,
+                )
             }
         }
     }

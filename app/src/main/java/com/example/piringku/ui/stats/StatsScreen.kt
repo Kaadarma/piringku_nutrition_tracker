@@ -38,6 +38,11 @@ import androidx.compose.ui.unit.dp
 import androidx.compose.ui.unit.sp
 import androidx.compose.runtime.LaunchedEffect
 import androidx.compose.runtime.mutableLongStateOf
+import androidx.compose.runtime.mutableStateOf
+import androidx.compose.runtime.rememberCoroutineScope
+import kotlinx.coroutines.Dispatchers
+import kotlinx.coroutines.launch
+import kotlinx.coroutines.withContext
 import com.example.piringku.data.UserPreferences
 import coil.compose.AsyncImage
 import com.example.piringku.data.DailyTargets
@@ -166,8 +171,18 @@ fun StatsScreen() {
         .getEntriesInRange(last7Start, today.plusDays(1), userId)
         .collectAsState(initial = emptyList())
 
-    val summary = remember(periodEntries, periodDays) { computeStatsSummary(periodEntries, periodDays) }
-    val dailyBars = remember(last7Entries, last7Start) { computeDailyBars(last7Entries, last7Start) }
+    var summary by remember { mutableStateOf(StatsSummary()) }
+    var dailyBars by remember { mutableStateOf(emptyList<DayBar>()) }
+    LaunchedEffect(periodEntries, periodDays) {
+        withContext(Dispatchers.Default) {
+            summary = computeStatsSummary(periodEntries, periodDays)
+        }
+    }
+    LaunchedEffect(last7Entries, last7Start) {
+        withContext(Dispatchers.Default) {
+            dailyBars = computeDailyBars(last7Entries, last7Start)
+        }
+    }
 
     Column(
         modifier = Modifier

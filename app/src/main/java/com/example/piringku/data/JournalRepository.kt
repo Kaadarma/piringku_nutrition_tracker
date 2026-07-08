@@ -81,6 +81,7 @@ class JournalRepository private constructor(context: Context) {
         carbs: Float,
         mealType: MealType,
         imageUrl: String,
+        timestamp: Instant = Instant.now(),
     ): JournalEntry {
         return JournalEntry(
             userId = userId,
@@ -92,7 +93,7 @@ class JournalRepository private constructor(context: Context) {
             fat = fat * portion,
             carbs = carbs * portion,
             mealType = mealType,
-            timestamp = Instant.now(),
+            timestamp = timestamp,
             imageUrl = imageUrl,
         )
     }

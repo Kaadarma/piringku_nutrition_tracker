@@ -32,6 +32,7 @@ import androidx.compose.runtime.Composable
 import androidx.compose.runtime.getValue
 import androidx.compose.runtime.mutableFloatStateOf
 import androidx.compose.runtime.remember
+import androidx.compose.runtime.rememberCoroutineScope
 import androidx.compose.runtime.setValue
 import androidx.compose.ui.Alignment
 import androidx.compose.ui.Modifier
@@ -51,7 +52,6 @@ import com.example.piringku.ui.theme.HealthGreen
 import com.example.piringku.ui.theme.EnergyOrange
 import androidx.compose.ui.text.font.FontWeight
 import androidx.compose.ui.unit.sp
-import kotlinx.coroutines.CoroutineScope
 import kotlinx.coroutines.Dispatchers
 import kotlinx.coroutines.launch
 import kotlinx.coroutines.withContext
@@ -66,6 +66,7 @@ fun UpdateDeleteSheet(
     val context = LocalContext.current
     val repository = remember { JournalRepository.getInstance(context) }
     var portion by remember { mutableFloatStateOf(entry.portion) }
+    val scope = rememberCoroutineScope()
 
     val ratio = portion / entry.portion
     val updatedCalories = entry.calories * ratio
@@ -208,7 +209,7 @@ fun UpdateDeleteSheet(
 
         Button(
             onClick = {
-                CoroutineScope(Dispatchers.IO).launch {
+                scope.launch(Dispatchers.IO) {
                     repository.updateEntry(entry.withPortion(portion))
                     withContext(Dispatchers.Main) {
                         onUpdated()
@@ -235,7 +236,7 @@ fun UpdateDeleteSheet(
 
         OutlinedButton(
             onClick = {
-                CoroutineScope(Dispatchers.IO).launch {
+                scope.launch(Dispatchers.IO) {
                     repository.deleteEntryById(entry.id, entry.userId)
                     withContext(Dispatchers.Main) {
                         onDeleted()

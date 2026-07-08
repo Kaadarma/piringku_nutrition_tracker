@@ -100,7 +100,7 @@ fun SearchScreen(
                 query = it
                 if (it.isNotBlank()) {
                     isSearching = true
-                    scope.launch(Dispatchers.Default) {
+                    scope.launch(Dispatchers.IO) {
                         val result = repository.searchFoods(it)
                         withContext(Dispatchers.Main) {
                             results = result
@@ -169,7 +169,7 @@ fun SearchScreen(
                             contentPadding = PaddingValues(horizontal = 20.dp),
                             verticalArrangement = Arrangement.spacedBy(12.dp),
                         ) {
-                            items(results) { food ->
+                            items(results, key = { it.id }) { food ->
                                 SearchResultCard(
                                     food = food,
                                     onClick = {
@@ -614,7 +614,7 @@ private fun HistoryContent(
                     }
                 }
             }
-            items(history) { food ->
+            items(history, key = { it.id }) { food ->
                 SearchResultCard(
                     food = food,
                     onClick = { onFoodClick(food) },

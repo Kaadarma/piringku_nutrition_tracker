@@ -1,175 +1,145 @@
 # Piringku - Nutrition Tracker
 
-Aplikasi mobile Android untuk tracking nutrisi makanan Indonesia menggunakan Jetpack Compose dan Material Design 3.
+Aplikasi mobile Android untuk tracking nutrisi makanan Indonesia menggunakan Jetpack Compose, Material Design 3, dan Room Database.
 
-## 🎯 Fitur
+## Fitur
 
-- **Journal** - Catat asupan makanan harian
-- **Stats** - Lihat statistik nutrisi (kalori, protein, lemak, karb)
-- **Cari** - Cari makanan dari dataset 1300+ items
-- **Profile** - Kelola profil dan preferensi
+- **Auth** - Register, login, data diri, multi-user support
+- **Journal** - Catat asupan makanan harian dengan target nutrisi per hari
+- **Stats** - Statistik nutrisi (kalori, protein, lemak, karbo) & progress goals
+- **Cari** - Cari makanan dari dataset 1346 item (RIwayat pencarian)
+- **Profile** - Kelola profil, foto, target nutrisi, reminder makan
+- **Reminder** - Pengingat makan pagi/siang/malam via notifikasi
 
-## 🛠️ Tech Stack
+## Tech Stack
 
 | Komponen | Versi |
 |----------|-------|
 | Kotlin | 2.2.10 |
 | Gradle | 9.3.1 |
 | AGP | 9.1.1 |
-| Compose | BOM 2024.09.00 |
+| Compose BOM | 2024.09.00 |
+| Room | 2.6.1 |
 | compileSdk | 36 |
 | minSdk | 21 |
 
 **Dependencies:**
-- Jetpack Compose (Material 3)
-- Navigation Compose (2.9.8)
-- Gson (2.11.0) - JSON parsing
-- Coil (2.7.0) - Image loading
+- Jetpack Compose (Material 3), Navigation Compose 2.9.8
+- Room 2.6.1 (database), Gson 2.11.0 (JSON parsing)
+- Coil 2.7.0 (image loading)
 
-## 📁 Struktur Project
+## Struktur Project
 
 ```
-app/
-├── src/main/
-│   ├── kotlin/com/example/piringku/
-│   │   ├── MainActivity.kt
-│   │   ├── MainScreens.kt
-│   │   ├── data/
-│   │   │   ├── FoodRepository.kt
-│   │   │   └── JournalRepository.kt
-│   │   ├── model/
-│   │   │   ├── DailyNutrition.kt
-│   │   │   ├── FoodItem.kt
-│   │   │   ├── JournalEntry.kt
-│   │   │   └── MealType.kt
-│   │   └── ui/
-│   │       ├── journal/
-│   │       │   ├── JournalEntryCard.kt
-│   │       │   ├── JournalScreen.kt
-│   │       │   ├── FoodDetailSheet.kt
-│   │       │   └── UpdateDeleteSheet.kt
-│   │       ├── search/
-│   │       │   ├── SearchScreen.kt
-│   │       │   ├── SearchResultCard.kt
-│   │       │   └── SkeletonLoader.kt
-│   │       ├── stats/
-│   │       │   └── StatsScreen.kt
-│   │       └── theme/
-│   │           ├── Color.kt
-│   │           ├── Theme.kt
-│   │           └── Type.kt
-│   ├── assets/
-│   │   └── food_data.json (277KB - 1346 items)
-│   └── AndroidManifest.xml
-├── build.gradle.kts
-└── gradle/libs.versions.toml
+app/src/main/kotlin/com/example/piringku/
+├── MainActivity.kt              # Single Activity + NavHost
+├── MainScreens.kt               # Bottom nav (4 tabs)
+├── data/
+│   ├── FoodRepository.kt        # JSON food dataset loader
+│   ├── JournalRepository.kt     # Journal CRUD (in-memory)
+│   ├── TargetPreferences.kt     # Target nutrisi per user
+│   ├── UserPreferences.kt       # Session user ID
+│   ├── SearchHistoryManager.kt  # Search history (SharedPrefs)
+│   ├── ReminderPreferences.kt   # Reminder settings
+│   ├── repository/
+│   │   └── UserRepository.kt    # User CRUD via Room
+│   └── local/
+│       ├── AppDatabase.kt       # Room DB (version 4)
+│       ├── dao/ (FoodDao, JournalDao, UserDao)
+│       ├── entity/ (FoodEntity, JournalEntryEntity, UserEntity)
+│       └── FoodDatabasePopulator.kt
+├── model/
+│   ├── DailyNutrition.kt
+│   ├── FoodItem.kt
+│   ├── JournalEntry.kt
+│   └── MealType.kt
+├── ui/
+│   ├── auth/ (LoginScreen, RegisterScreen, DataDiriScreen)
+│   ├── journal/ (JournalScreen, JournalEntryCard, FoodDetailSheet, UpdateDeleteSheet)
+│   ├── search/ (SearchScreen, SearchResultCard, SkeletonLoader)
+│   ├── stats/ (StatsScreen, ProgresGoalsScreen)
+│   ├── profile/ (ProfilScreen)
+│   ├── settings/ (ReminderSettingsScreen)
+│   ├── splash/ (SplashScreen)
+│   └── theme/ (Color.kt, Theme.kt, Type.kt)
+├── util/
+│   ├── ProfilePictureManager.kt
+│   ├── NotificationHelper.kt
+│   ├── MealReminderScheduler.kt
+│   ├── MealReminderReceiver.kt
+│   └── BootReceiver.kt
+└── assets/food_data.json (277KB - 1346 items)
 ```
 
-## 🎨 Design System
+## Design System
 
 **Warna Utama:**
 - Primary (Fresh Green): `#0F5238`
 - Secondary (Vibrant Orange): `#9B4500`
 - Tertiary (Red): `#713638`
 
-**Typography:**
-- Headline: Inter Bold
-- Body: Inter Regular
-- Label: JetBrains Mono
-
+**Typography:** Inter (body/headings), JetBrains Mono (labels)
 **Spacing:** 8px grid base, 20px padding, 16px gutter
 **Radius:** 16px cards, 24px hero, 12px buttons
 
 Lihat `Aset/DESIGN.md` untuk detail lengkap.
 
-## 🚀 Quick Start
+## Quick Start
 
-### Build
 ```bash
-./gradlew assembleDebug          # Build APK
-./gradlew lintDebug              # Lint check
+# Build
+./gradlew assembleDebug
+
+# Install ke device
+./gradlew installDebug
+
+# Testing
+./gradlew testDebugUnitTest
+./gradlew connectedDebugAndroidTest
 ```
 
-### Install & Run
-```bash
-./gradlew installDebug                      # Install ke device
-adb shell am start -n com.example.piringku/.MainActivity
-```
+## CLI Development (Tanpa Android Studio)
 
-### Testing
 ```bash
-./gradlew testDebugUnitTest             # Unit tests
-./gradlew connectedDebugAndroidTest     # Instrumented tests
-```
-
-### CLI Development (Tanpa Android Studio)
-```bash
-# Setup device
+# Setup
 adb devices
 emulator -avd <name>
 
 # Build & deploy
 ./gradlew assembleDebug --no-daemon
 ./gradlew installDebug
+adb shell am start -n com.example.piringku/.MainActivity
 
 # Debug
 adb logcat | grep piringku
-adb logcat -c  # clear logs
 ```
 
-Lihat `AGENTS.md` untuk workflow lengkap CLI development.
+## Data
 
-## 📊 Data
+**Food Dataset:** Kaggle "Indonesian Food and Drink Nutrition Dataset" (1346 item, format JSON)
+**Database:** Room SQLite dengan `fallbackToDestructiveMigration()` tiap versi berubah
 
-**Food Dataset:**
-- Source: Kaggle "Indonesian Food and Drink Nutrition Dataset"
-- Format: JSON (`app/src/main/assets/food_data.json`)
-- Items: 1346 makanan Indonesia
-- Fields: id, name, calories, proteins, fat, carbs, image
+## Development Notes
 
-**Loading:**
-```kotlin
-val foods = FoodRepository.searchFood("nasi")
-```
+- **Arsitektur:** Single Activity + NavHost, bottom nav 4 rute (journal, stats, cari, profile)
+- **Multi-user:** Room + UserPreferences untuk session switching
+- **Foto profil:** Disimpan sebagai file `profile_{userId}.jpg`, Coil untuk loading
+- **Target nutrisi:** Default 2000 kkal per hari, bisa di-custom via TargetEditSheet; reset ke default untuk hari non-today
+- **Wajib uninstall sebelum build baru** tiap kali versi DB berubah (destructive migration)
 
-## 🔧 Development
+## Recent Changes
 
-**Team:**
-- Orang 1: Journal screen (JournalScreen, JournalEntryCard, FoodDetailSheet, UpdateDeleteSheet)
-- Orang 2: Stats screen (StatsScreen)
-- Orang 3: Search/Cari search screen (SearchScreen, SearchResultCard)
-- Orang 4: Backend (Room DB planned)
+- ✅ Multi-user support dengan Room DB (UserEntity, login/register, data diri)
+- ✅ Barcode scanner removed (CameraX + MLKit dihapus)
+- ✅ Password visibility toggle & confirm password di Register
+- ✅ Back button di Register screen
+- ✅ Profile photo loading bug fixed (LaunchedEffect key)
+- ✅ Search bottom sheet back → kembali ke journal
+- ✅ Date picker state fresh tiap dialog dibuka
+- ✅ Food entry timestamp pakai selectedDate (bukan Instant.now())
+- ✅ Target nutrisi reset per hari (2000 default untuk non-today)
+- ✅ Performance fixes (recomposition, dispatcher, coroutine scope)
 
-**Conventions:**
-- Kotlin style: Kotlin官方规范
-- Compose: Material 3 指南
-- Naming: 驼峰命名函数，帕斯卡命名可组合项
-- Navigation: 底部导航，4个路由
-
-**Recent Fixes (2026-06-23):**
-- ✅ SkeletonLoader MaterialTheme import
-- ✅ Theme.kt dark mode logic
-- ✅ AndroidManifest INTERNET permission
-- ✅ DateTimeFormatter pattern crash fix (JournalScreen.kt)
-- ✅ P0: Callback state on IO thread → withContext(Main)
-- ✅ P1: Shared ModalBottomSheet state → separate states
-- ✅ P2: Gson exception handling in FoodRepository
-
-Lihat `logs/REPAIR_SUMMARY.md` untuk detail.
-
-## 📝 Notes
-
-- 单一 Activity + NavHost 架构
-- Compose 编译器通过 `kotlin-compose` 插件
-- 已实现 Journal 相关界面（JournalScreen, JournalEntryCard, FoodDetailSheet, UpdateDeleteSheet）
-- Room 数据库计划中（Orang 4）
-- 所有设计令牌位于 `ui/theme/`
-
-## 📄 License
+## License
 
 MIT
-
----
-
-**Last Updated:** 2026-06-23  
-**Status:** Active Development
