@@ -128,7 +128,7 @@ fun JournalScreen() {
     val targetFat = targets.fat
     val targetCarbs = targets.carbs
 
-    val remainingCalories = (targetCalories - nutrition.calories).coerceAtLeast(0f)
+    val remainingCalories = targetCalories - nutrition.calories
     val calorieProgress = if (targetCalories > 0f) (nutrition.calories / targetCalories).coerceAtMost(1f) else 0f
 
     val entryToEdit by remember {
