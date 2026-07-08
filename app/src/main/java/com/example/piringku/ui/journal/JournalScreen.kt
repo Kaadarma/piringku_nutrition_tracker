@@ -204,6 +204,7 @@ fun JournalScreen() {
                 )
             } else {
                 com.example.piringku.ui.search.SearchScreen(
+                    onBack = { showAddSheet = false },
                     onFoodSelected = { food ->
                         selectedFood = food
                     },
