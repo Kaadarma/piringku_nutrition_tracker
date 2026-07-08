@@ -6,6 +6,7 @@ import androidx.compose.animation.core.animateFloat
 import androidx.compose.animation.core.infiniteRepeatable
 import androidx.compose.animation.core.rememberInfiniteTransition
 import androidx.compose.animation.core.tween
+import androidx.compose.foundation.BorderStroke
 import androidx.compose.foundation.background
 import androidx.compose.foundation.clickable
 import androidx.compose.foundation.layout.Arrangement
@@ -20,15 +21,22 @@ import androidx.compose.foundation.layout.height
 import androidx.compose.foundation.layout.padding
 import androidx.compose.foundation.layout.size
 import androidx.compose.foundation.layout.width
+import androidx.compose.foundation.rememberScrollState
+import androidx.compose.foundation.verticalScroll
 import androidx.compose.foundation.lazy.LazyColumn
 import androidx.compose.foundation.lazy.items
 import androidx.compose.foundation.shape.CircleShape
 import androidx.compose.foundation.shape.RoundedCornerShape
 import androidx.compose.material.icons.Icons
 import androidx.compose.material.icons.automirrored.filled.ArrowBack
+import androidx.compose.material.icons.filled.Add
 import androidx.compose.material.icons.filled.Delete
 import androidx.compose.material.icons.filled.Search
 import androidx.compose.material.icons.outlined.Restaurant
+import androidx.compose.material3.Button
+import androidx.compose.material3.ButtonDefaults
+import androidx.compose.material3.Card
+import androidx.compose.material3.CardDefaults
 import androidx.compose.material3.Icon
 import androidx.compose.material3.IconButton
 import androidx.compose.material3.MaterialTheme
@@ -57,6 +65,10 @@ import androidx.compose.ui.text.style.TextOverflow
 import androidx.compose.ui.unit.dp
 import coil.compose.AsyncImage
 import com.example.piringku.data.FoodRepository
+import com.example.piringku.ui.theme.BorderSubtle
+import com.example.piringku.ui.theme.DataBlue
+import com.example.piringku.ui.theme.EnergyOrange
+import com.example.piringku.ui.theme.HealthGreen
 import com.example.piringku.data.SearchHistoryManager
 import com.example.piringku.model.FoodItem
 import kotlinx.coroutines.Dispatchers
@@ -81,6 +93,7 @@ fun SearchScreen(
     var results by remember { mutableStateOf<List<FoodItem>>(emptyList()) }
     var isSearching by remember { mutableStateOf(false) }
     var isLoaded by remember { mutableStateOf(false) }
+    var selectedFoodForDetail by remember { mutableStateOf<FoodItem?>(null) }
 
     LaunchedEffect(Unit) {
         withContext(Dispatchers.IO) {
@@ -89,7 +102,19 @@ fun SearchScreen(
         isLoaded = true
     }
 
-    Column(
+    val onFoodClick: (FoodItem) -> Unit = { food ->
+        historyManager.addToHistory(food)
+        history = historyManager.getHistory()
+        selectedFoodForDetail = food
+    }
+
+    selectedFoodForDetail?.let { food ->
+        FoodDetailView(
+            food = food,
+            onBack = { selectedFoodForDetail = null },
+            onAddToJournal = { onFoodSelected(food) },
+        )
+    } ?: Column(
         modifier = Modifier
             .fillMaxSize()
             .background(MaterialTheme.colorScheme.surface),
@@ -144,11 +169,7 @@ fun SearchScreen(
                     query.isBlank() -> {
                         RecommendationsSection(
                             foods = repository.getRecommendations(),
-                            onFoodClick = {
-                                historyManager.addToHistory(it)
-                                history = historyManager.getHistory()
-                                onFoodSelected(it)
-                            },
+                            onFoodClick = onFoodClick,
                         )
                     }
 
@@ -172,11 +193,7 @@ fun SearchScreen(
                             items(results, key = { it.id }) { food ->
                                 SearchResultCard(
                                     food = food,
-                                    onClick = {
-                                        historyManager.addToHistory(food)
-                                        history = historyManager.getHistory()
-                                        onFoodSelected(food)
-                                    },
+                                    onClick = { onFoodClick(food) },
                                 )
                             }
                         }
@@ -187,21 +204,255 @@ fun SearchScreen(
             1 -> {
                 HistoryContent(
                     history = history,
-                    onFoodClick = {
-                        historyManager.addToHistory(it)
-                        history = historyManager.getHistory()
-                        onFoodSelected(it)
-                    },
+                    onFoodClick = onFoodClick,
                     onClearHistory = {
                         historyManager.clearHistory()
                         history = emptyList()
                     },
                 )
             }
-
-
         }
     }
+}
+
+@Composable
+private fun FoodDetailView(
+    food: FoodItem,
+    onBack: () -> Unit,
+    onAddToJournal: () -> Unit,
+) {
+    Column(
+        modifier = Modifier
+            .fillMaxSize()
+            .background(MaterialTheme.colorScheme.surface)
+            .verticalScroll(rememberScrollState()),
+    ) {
+        Row(
+            modifier = Modifier
+                .fillMaxWidth()
+                .padding(horizontal = 12.dp, vertical = 8.dp),
+            verticalAlignment = Alignment.CenterVertically,
+        ) {
+            IconButton(onClick = onBack) {
+                Icon(
+                    Icons.AutoMirrored.Filled.ArrowBack,
+                    contentDescription = "Kembali",
+                    tint = MaterialTheme.colorScheme.onSurfaceVariant,
+                )
+            }
+            Text(
+                text = "Detail Makanan",
+                style = MaterialTheme.typography.titleMedium,
+                fontWeight = FontWeight.SemiBold,
+                color = MaterialTheme.colorScheme.onSurface,
+            )
+        }
+
+        Box(
+            modifier = Modifier
+                .fillMaxWidth()
+                .height(220.dp)
+                .clip(RoundedCornerShape(0.dp)),
+            contentAlignment = Alignment.Center,
+        ) {
+            if (food.image.isNullOrBlank()) {
+                Box(
+                    modifier = Modifier
+                        .fillMaxSize()
+                        .background(MaterialTheme.colorScheme.surfaceVariant),
+                    contentAlignment = Alignment.Center,
+                ) {
+                    Icon(
+                        Icons.Outlined.Restaurant,
+                        contentDescription = null,
+                        tint = MaterialTheme.colorScheme.onSurfaceVariant,
+                        modifier = Modifier.size(64.dp),
+                    )
+                }
+            } else {
+                AsyncImage(
+                    model = food.image,
+                    contentDescription = food.name,
+                    modifier = Modifier.fillMaxSize(),
+                    contentScale = ContentScale.Crop,
+                )
+            }
+        }
+
+        Column(
+            modifier = Modifier.padding(horizontal = 20.dp),
+        ) {
+            Spacer(Modifier.height(16.dp))
+
+            Text(
+                text = food.name,
+                style = MaterialTheme.typography.headlineMedium,
+                fontWeight = FontWeight.Bold,
+                color = MaterialTheme.colorScheme.onSurface,
+            )
+            Spacer(Modifier.height(4.dp))
+            Text(
+                text = "per 100 gram",
+                style = MaterialTheme.typography.bodyMedium,
+                color = MaterialTheme.colorScheme.onSurfaceVariant,
+            )
+
+            Spacer(Modifier.height(20.dp))
+
+            Text(
+                text = "Informasi Gizi",
+                style = MaterialTheme.typography.titleMedium,
+                fontWeight = FontWeight.SemiBold,
+                color = MaterialTheme.colorScheme.onSurface,
+            )
+            Spacer(Modifier.height(12.dp))
+
+            Row(
+                modifier = Modifier.fillMaxWidth(),
+                horizontalArrangement = Arrangement.spacedBy(12.dp),
+            ) {
+                NutritionCard(
+                    label = "Kalori",
+                    value = "${food.calories}",
+                    unit = "kcal",
+                    color = EnergyOrange,
+                    modifier = Modifier.weight(1f),
+                )
+                NutritionCard(
+                    label = "Protein",
+                    value = "${food.proteins}",
+                    unit = "g",
+                    color = DataBlue,
+                    modifier = Modifier.weight(1f),
+                )
+            }
+            Spacer(Modifier.height(12.dp))
+            Row(
+                modifier = Modifier.fillMaxWidth(),
+                horizontalArrangement = Arrangement.spacedBy(12.dp),
+            ) {
+                NutritionCard(
+                    label = "Lemak",
+                    value = "${food.fat}",
+                    unit = "g",
+                    color = HealthGreen,
+                    modifier = Modifier.weight(1f),
+                )
+                NutritionCard(
+                    label = "Karbohidrat",
+                    value = "${food.carbs}",
+                    unit = "g",
+                    color = BorderSubtle,
+                    modifier = Modifier.weight(1f),
+                )
+            }
+
+            Spacer(Modifier.height(24.dp))
+
+            Text(
+                text = "Deskripsi",
+                style = MaterialTheme.typography.titleMedium,
+                fontWeight = FontWeight.SemiBold,
+                color = MaterialTheme.colorScheme.onSurface,
+            )
+            Spacer(Modifier.height(8.dp))
+            Text(
+                text = buildDescription(food),
+                style = MaterialTheme.typography.bodyMedium,
+                color = MaterialTheme.colorScheme.onSurfaceVariant,
+                lineHeight = MaterialTheme.typography.bodyMedium.lineHeight,
+            )
+
+            Spacer(Modifier.height(32.dp))
+
+            Button(
+                onClick = onAddToJournal,
+                modifier = Modifier
+                    .fillMaxWidth()
+                    .height(48.dp)
+                    .clip(RoundedCornerShape(12.dp)),
+                colors = ButtonDefaults.buttonColors(
+                    containerColor = MaterialTheme.colorScheme.primary,
+                ),
+            ) {
+                Icon(
+                    Icons.Default.Add,
+                    contentDescription = null,
+                    modifier = Modifier.size(18.dp),
+                )
+                Spacer(Modifier.width(8.dp))
+                Text(
+                    text = "Tambah ke Jurnal",
+                    style = MaterialTheme.typography.labelLarge,
+                    fontWeight = FontWeight.SemiBold,
+                )
+            }
+
+            Spacer(Modifier.height(24.dp))
+        }
+    }
+}
+
+@Composable
+private fun NutritionCard(
+    label: String,
+    value: String,
+    unit: String,
+    color: Color,
+    modifier: Modifier = Modifier,
+) {
+    Card(
+        modifier = modifier,
+        shape = RoundedCornerShape(12.dp),
+        colors = CardDefaults.cardColors(
+            containerColor = MaterialTheme.colorScheme.surfaceContainerLowest,
+        ),
+        border = BorderStroke(1.dp, BorderSubtle),
+    ) {
+        Column(
+            modifier = Modifier
+                .fillMaxWidth()
+                .padding(16.dp),
+            horizontalAlignment = Alignment.CenterHorizontally,
+        ) {
+            Text(
+                text = label,
+                style = MaterialTheme.typography.labelSmall,
+                color = MaterialTheme.colorScheme.onSurfaceVariant,
+            )
+            Spacer(Modifier.height(4.dp))
+            Text(
+                text = value,
+                style = MaterialTheme.typography.headlineSmall,
+                fontWeight = FontWeight.Bold,
+                color = color,
+            )
+            Text(
+                text = unit,
+                style = MaterialTheme.typography.bodySmall,
+                color = MaterialTheme.colorScheme.onSurfaceVariant,
+            )
+        }
+    }
+}
+
+private fun buildDescription(food: FoodItem): String {
+    val proteinPer = ((food.proteins / 60f) * 100).toInt().coerceAtMost(100)
+    val fatPer = ((food.fat / 65f) * 100).toInt().coerceAtMost(100)
+    val carbsPer = ((food.carbs / 300f) * 100).toInt().coerceAtMost(100)
+
+    val parts = mutableListOf<String>()
+    parts.add("${food.name} mengandung ${food.calories} kalori per 100 gram penyajian.")
+
+    if (food.proteins > 0f) parts.add("Mengandung ${food.proteins}g protein ($proteinPer% dari kebutuhan harian).")
+    if (food.fat > 0f) parts.add("Terdapat ${food.fat}g lemak ($fatPer% dari kebutuhan harian).")
+    if (food.carbs > 0f) parts.add("Karbohidrat sebesar ${food.carbs}g ($carbsPer% dari kebutuhan harian).")
+
+    if (food.calories <= 50f) parts.add("Makanan ini rendah kalori, cocok untuk camilan ringan.")
+    else if (food.calories <= 200f) parts.add("Makanan ini memiliki kalori sedang, cocok sebagai makanan pendamping.")
+    else if (food.calories >= 400f) parts.add("Makanan ini tinggi kalori, baik untuk sumber energi.")
+
+    return parts.joinToString(" ")
 }
 
 @Composable
